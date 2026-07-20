@@ -33,7 +33,13 @@ jobs:
         run: npm install && npm run build
 
       - name: Build Windows exe
-        run: wails build -tags webkit2_41 -o OptiWin.exe
+        run: wails build -tags webkit2_41 -o OptiWin.exe -ldflags="-s -w" -trimpath
+
+      - name: Install UPX
+        run: choco install upx -y
+
+      - name: Compress exe
+        run: upx --ultra-brute build/bin/OptiWin.exe
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
