@@ -1,13 +1,15 @@
 package main
 
 import (
-	"OptiWin/services"
-	"OptiWin/utils"
 	"context"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
 	"os/exec"
+
+	"OptiWin/services"
+	"OptiWin/utils"
 )
 
 type App struct {
@@ -26,24 +28,30 @@ func (a *App) GetCurrentVersion() string { return CurrentVersion }
 func (a *App) GetSystemInfo() string     { return services.GetSystemInfo() }
 func (a *App) GetProxyInfo() string      { return utils.GetProxyInfo() }
 
+const StatusUpToDate = "same"
+
 func (a *App) CheckUpdate() string {
-	client := utils.GetHttpClient()
+	client := utils.GetHTTPClient()
 	req, err := http.NewRequest("GET", "https://api.github.com/repos/YouRan4/OptiWin/releases/latest", nil)
 	if err != nil {
-		return ""
+		return "err:创建请求失败"
 	}
 	req.Header.Set("User-Agent", "OptiWin/1.0")
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return ""
+		return "err:无法连接 GitHub"
 	}
 	defer resp.Body.Close()
 
+	if resp.StatusCode != http.StatusOK {
+		return "err:服务器返回 " + fmt.Sprint(resp.StatusCode)
+	}
+
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return ""
+		return "err:读取响应失败"
 	}
 
 	var release struct {
@@ -52,22 +60,25 @@ func (a *App) CheckUpdate() string {
 		HTMLURL string `json:"html_url"`
 	}
 	if err := json.Unmarshal(b, &release); err != nil {
-		return ""
+		return "err:解析版本信息失败"
 	}
 
 	if release.TagName == "" {
-		return ""
+		return "err:未获取到版本号"
 	}
 
 	if release.TagName == CurrentVersion {
-		return "same"
+		return StatusUpToDate
 	}
 
-	result, _ := json.Marshal(map[string]string{
+	result, err := json.Marshal(map[string]string{
 		"version": release.TagName,
 		"body":    release.Body,
 		"url":     release.HTMLURL,
 	})
+	if err != nil {
+		return "err:序列化失败"
+	}
 	return string(result)
 }
 

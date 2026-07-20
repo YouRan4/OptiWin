@@ -144,7 +144,7 @@ func InstallWebView2() string {
 	tmp := os.TempDir() + `\MicrosoftEdgeWebView2Setup.exe`
 	url := "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
 
-	out, err := utils.GetHttpClient().Get(url)
+	out, err := utils.GetHTTPClient().Get(url)
 	if err != nil {
 		return "下载失败: " + err.Error()
 	}
@@ -154,8 +154,11 @@ func InstallWebView2() string {
 	if err != nil {
 		return "创建文件失败: " + err.Error()
 	}
-	io.Copy(f, out.Body)
+	_, err = io.Copy(f, out.Body)
 	f.Close()
+	if err != nil {
+		return "下载不完整: " + err.Error()
+	}
 
 	cmd := exec.Command(tmp, "/silent", "/install")
 	utils.HideWindow(cmd)

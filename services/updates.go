@@ -148,8 +148,7 @@ func EnableVisibility() bool {
 	cmd := exec.Command("reg", "add", `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer`,
 		"/v", "SettingsPageVisibility", "/t", "REG_SZ", "/d", existing, "/f")
 	utils.HideWindow(cmd)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		utils.LogError(fmt.Sprintf("EnableVisibility 失败: %v\n输出: %s", err, string(out)))
+	if _, err := cmd.CombinedOutput(); err != nil {
 		return false
 	}
 	return true
@@ -181,8 +180,7 @@ func DisableVisibility() bool {
 		cmd := exec.Command("reg", "delete", `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer`,
 			"/v", "SettingsPageVisibility", "/f")
 		utils.HideWindow(cmd)
-		if out, err := cmd.CombinedOutput(); err != nil {
-			utils.LogError(fmt.Sprintf("DisableVisibility 删除失败: %v\n输出: %s", err, string(out)))
+		if err := cmd.Run(); err != nil {
 			return false
 		}
 		return true
@@ -195,8 +193,7 @@ func DisableVisibility() bool {
 	cmd := exec.Command("reg", "add", `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer`,
 		"/v", "SettingsPageVisibility", "/t", "REG_SZ", "/d", newVal, "/f")
 	utils.HideWindow(cmd)
-	if out, err := cmd.CombinedOutput(); err != nil {
-		utils.LogError(fmt.Sprintf("DisableVisibility 更新失败: %v\n输出: %s", err, string(out)))
+	if err := cmd.Run(); err != nil {
 		return false
 	}
 	return true
@@ -283,7 +280,7 @@ type KGLData struct {
 }
 
 func FetchKGL() (*KGLData, string) {
-	client := utils.GetHttpClient()
+	client := utils.GetHTTPClient()
 	resp, err := client.Get("https://settings.data.microsoft.com/settings/v3.0/xbox/knowngamelist")
 	if err != nil {
 		return nil, fmt.Sprintf("KGL 请求失败: %v", err)

@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { NSwitch, NButton, NSelect } from 'naive-ui'
+import { NSwitch, NButton, NSelect, useNotification } from 'naive-ui'
 import {
   GetPauseUpdatesStatus,
   EnablePauseUpdates,
@@ -17,6 +17,7 @@ import {
   UpdateKGL,
 } from '../../wailsjs/go/main/App'
 
+const notify = useNotification()
 const pauseUpdates = ref(false)
 const visibility = ref(false)
 const drivers = ref(true)
@@ -39,12 +40,12 @@ onMounted(async () => {
 
 async function doCerts() {
   const msg = await UpdateCertificates()
-  alert(msg)
+  notify.info({ title: '更新证书', description: msg, duration: 5000 })
 }
 
 async function doKGL() {
   const msg = await UpdateKGL()
-  alert(msg)
+  notify.info({ title: '更新 KGL', description: msg, duration: 5000 })
 }
 
 async function onPauseChange(v: boolean) {

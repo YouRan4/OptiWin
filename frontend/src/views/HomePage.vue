@@ -23,7 +23,7 @@ onMounted(async () => {
   checkedAuto = true
   const skipped = localStorage.getItem('optiwin_skip_version')
   const result = await CheckUpdate()
-  if (result && result !== 'same') {
+  if (result && !result.startsWith('err:') && result !== 'same') {
     const r = JSON.parse(result)
     if (r.version === skipped) return
     showUpdateDialog(r)
@@ -60,8 +60,9 @@ async function onCheckUpdate() {
   checking.value = true
   const result = await CheckUpdate()
   checking.value = false
-  if (!result) {
-    notify.error({ title: '检查更新', description: '无法连接到 GitHub，请检查网络设置', duration: 5000 })
+  if (!result || result.startsWith('err:')) {
+    const msg = result && result.startsWith('err:') ? result.slice(4) : '无法连接'
+    notify.error({ title: '检查更新', description: msg, duration: 5000 })
     return
   }
   if (result === 'same') {

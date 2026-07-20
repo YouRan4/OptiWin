@@ -17,7 +17,7 @@ var httpClient = &http.Client{
 	},
 }
 
-func GetHttpClient() *http.Client {
+func GetHTTPClient() *http.Client {
 	return httpClient
 }
 
