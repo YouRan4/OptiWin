@@ -67,7 +67,7 @@ func (a *App) CheckUpdate() string {
 		return "err:未获取到版本号"
 	}
 
-	if release.TagName == CurrentVersion {
+	if compareVersion(CurrentVersion, release.TagName) >= 0 {
 		return StatusUpToDate
 	}
 
