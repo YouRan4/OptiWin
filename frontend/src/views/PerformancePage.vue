@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
-import { NSwitch, useNotification } from 'naive-ui'
+import { NSwitch, NButton, useNotification } from 'naive-ui'
 import {
   GetUltimatePerformanceStatus, EnableUltimatePerformance, DisableUltimatePerformance,
   GetCStateStatus, EnableCState, DisableCState,
@@ -9,6 +9,7 @@ import {
   GetWindowedOptimizationStatus, EnableWindowedOptimization, DisableWindowedOptimization,
   GetMpoStatus, EnableMpo, DisableMpo,
   GetMemoryCompressionStatus, EnableMemoryCompression, DisableMemoryCompression,
+  ClearShaderCache,
 } from '../../wailsjs/go/main/App'
 
 const notify = useNotification()
@@ -68,6 +69,11 @@ async function onMpo(v: boolean) {
   if (v) await EnableMpo(); else await DisableMpo()
   mpo.value = await GetMpoStatus()
 }
+
+async function onClearShaderCache() {
+  const msg = await ClearShaderCache()
+  notify.success({ title: '着色器缓存', description: msg, duration: 5000 })
+}
 </script>
 
 <template>
@@ -88,6 +94,10 @@ async function onMpo(v: boolean) {
       <div class="setting-row"><div><div class="row-label">全屏优化</div><div class="row-desc">为全屏游戏和应用提供更低延迟</div></div><n-switch v-model:value="fullscreen" @update:value="onFullscreen" /></div>
       <div class="setting-row"><div><div class="row-label">窗口优化</div><div class="row-desc">优化窗口化应用的渲染和输入延迟</div></div><n-switch v-model:value="windowOpt" @update:value="onWindowed" /></div>
       <div class="setting-row"><div><div class="row-label">MPO</div><div class="row-desc">多平面覆盖技术，减少窗口化游戏的输入延迟</div></div><n-switch v-model:value="mpo" @update:value="onMpo" /></div>
+      <div class="setting-row">
+        <div><div class="row-label">清理着色器缓存</div><div class="row-desc">清理 NVIDIA/AMD GPU 着色器缓存，解决画面卡顿和渲染异常</div></div>
+        <n-button size="small" @click="onClearShaderCache">清理</n-button>
+      </div>
     </div>
   </div>
 </template>

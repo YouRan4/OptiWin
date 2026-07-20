@@ -1,3 +1,4 @@
+//go:build windows
 package services
 
 import (
@@ -9,47 +10,265 @@ import (
 	"os"
 	"os/exec"
 	"path/filepath"
-	"runtime"
 	"time"
+	"golang.org/x/sys/windows/registry"
+	"OptiWin/utils"
 )
 
-// UpdateCertificates 从 Windows Update 拉取根证书并导入系统
-func UpdateCertificates() string {
-	if runtime.GOOS != "windows" {
-		return "仅支持 Windows"
+func GetUpdateChannel() string {
+	branch, _, _ := utils.RegReadString(registry.LOCAL_MACHINE,
+		`SOFTWARE\Microsoft\WindowsSelfHost\Applicability`,
+		"BranchName")
+	ring, _, _ := utils.RegReadString(registry.LOCAL_MACHINE,
+		`SOFTWARE\Microsoft\WindowsSelfHost\Applicability`,
+		"Ring")
+
+	switch {
+	case ring == "" || ring == "Retail":
+		return "retail"
+	case branch == "ReleasePreview":
+		return "ReleasePreview"
+	case branch == "Beta":
+		return "Beta"
+	case branch == "Dev":
+		return "Dev"
+	case branch == "Canary":
+		return "Canary"
+	default:
+		return "retail"
+	}
+}
+
+func SetUpdateChannel(channel string) bool {
+	path := `SOFTWARE\Microsoft\WindowsSelfHost\Applicability`
+	switch channel {
+	case "retail":
+		utils.RegWriteString(registry.LOCAL_MACHINE, path, "Ring", "Retail")
+		utils.RegWriteString(registry.LOCAL_MACHINE, path, "ContentType", "Mainline")
+		k, err := registry.OpenKey(registry.LOCAL_MACHINE, path, registry.SET_VALUE)
+		if err == nil {
+			k.DeleteValue("BranchName")
+			k.Close()
+		}
+	case "ReleasePreview":
+		utils.RegWriteString(registry.LOCAL_MACHINE, path, "BranchName", "ReleasePreview")
+		utils.RegWriteString(registry.LOCAL_MACHINE, path, "Ring", "External")
+		utils.RegWriteString(registry.LOCAL_MACHINE, path, "ContentType", "Skip")
+	case "Beta":
+		utils.RegWriteString(registry.LOCAL_MACHINE, path, "BranchName", "Beta")
+		utils.RegWriteString(registry.LOCAL_MACHINE, path, "Ring", "External")
+		utils.RegWriteString(registry.LOCAL_MACHINE, path, "ContentType", "Skip")
+	case "Dev":
+		utils.RegWriteString(registry.LOCAL_MACHINE, path, "BranchName", "Dev")
+		utils.RegWriteString(registry.LOCAL_MACHINE, path, "Ring", "External")
+		utils.RegWriteString(registry.LOCAL_MACHINE, path, "ContentType", "Skip")
+	case "Canary":
+		utils.RegWriteString(registry.LOCAL_MACHINE, path, "BranchName", "Canary")
+		utils.RegWriteString(registry.LOCAL_MACHINE, path, "Ring", "WIS")
+		utils.RegWriteString(registry.LOCAL_MACHINE, path, "ContentType", "Skip")
+	default:
+		return false
+	}
+	return true
+}
+
+func GetPauseUpdatesStatus() bool {
+	k, err := registry.OpenKey(registry.LOCAL_MACHINE,
+		`SOFTWARE\Microsoft\WindowsUpdate\UX\Settings`, registry.QUERY_VALUE)
+	if err != nil {
+		return false
+	}
+	defer k.Close()
+	_, _, err = k.GetStringValue("PauseUpdatesExpiryTime")
+	return err == nil
+}
+
+func EnablePauseUpdates() bool {
+	k, _, _ := registry.CreateKey(registry.LOCAL_MACHINE,
+		`SOFTWARE\Microsoft\WindowsUpdate\UX\Settings`, registry.SET_VALUE)
+	defer k.Close()
+
+	k.SetDWordValue("FlightSettingsMaxPauseDays", 37200)
+	k.SetStringValue("PauseFeatureUpdatesStartTime", "2023-08-17T12:47:51Z")
+	k.SetStringValue("PauseFeatureUpdatesEndTime", "2126-01-01T00:00:00Z")
+	k.SetStringValue("PauseQualityUpdatesStartTime", "2023-08-17T12:47:51Z")
+	k.SetStringValue("PauseQualityUpdatesEndTime", "2126-01-01T00:00:00Z")
+	k.SetStringValue("PauseUpdatesStartTime", "2023-08-17T12:47:51Z")
+	k.SetStringValue("PauseUpdatesExpiryTime", "2126-01-01T00:00:00Z")
+	return true
+}
+
+func DisablePauseUpdates() bool {
+	k, err := registry.OpenKey(registry.LOCAL_MACHINE,
+		`SOFTWARE\Microsoft\WindowsUpdate\UX\Settings`, registry.SET_VALUE)
+	if err != nil {
+		return false
+	}
+	defer k.Close()
+
+	for _, v := range []string{
+		"FlightSettingsMaxPauseDays",
+		"PauseFeatureUpdatesStartTime",
+		"PauseFeatureUpdatesEndTime",
+		"PauseQualityUpdatesStartTime",
+		"PauseQualityUpdatesEndTime",
+		"PauseUpdatesStartTime",
+		"PauseUpdatesExpiryTime",
+	} {
+		k.DeleteValue(v)
+	}
+	return true
+}
+
+func GetVisibilityStatus() bool {
+	val, _, err := utils.RegReadString(registry.LOCAL_MACHINE,
+		`SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer`,
+		"SettingsPageVisibility")
+	if err != nil || val == "" {
+		return false
+	}
+	for i := 0; i+18 <= len(val); i++ {
+		if val[i:i+18] == "hide:windowsupdate" {
+			return true
+		}
+	}
+	return false
+}
+
+func EnableVisibility() bool {
+	existing, _, err := utils.RegReadString(registry.LOCAL_MACHINE,
+		`SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer`,
+		"SettingsPageVisibility")
+	if err != nil {
+		existing = ""
+	}
+	if existing != "" {
+		existing += ";hide:windowsupdate"
+	} else {
+		existing = "hide:windowsupdate"
+	}
+	cmd := exec.Command("reg", "add", `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer`,
+		"/v", "SettingsPageVisibility", "/t", "REG_SZ", "/d", existing, "/f")
+	utils.HideWindow(cmd)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		utils.LogError(fmt.Sprintf("EnableVisibility 失败: %v\n输出: %s", err, string(out)))
+		return false
+	}
+	return true
+}
+
+func DisableVisibility() bool {
+	existing, _, err := utils.RegReadString(registry.LOCAL_MACHINE,
+		`SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer`,
+		"SettingsPageVisibility")
+	if err != nil {
+		return true
 	}
 
-	// 生成临时文件名
+	var parts []string
+	start := 0
+	for start < len(existing) {
+		end := start
+		for end < len(existing) && existing[end] != ';' {
+			end++
+		}
+		part := existing[start:end]
+		if part != "hide:windowsupdate" && part != "" {
+			parts = append(parts, part)
+		}
+		start = end + 1
+	}
+
+	if len(parts) == 0 {
+		cmd := exec.Command("reg", "delete", `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer`,
+			"/v", "SettingsPageVisibility", "/f")
+		utils.HideWindow(cmd)
+		if out, err := cmd.CombinedOutput(); err != nil {
+			utils.LogError(fmt.Sprintf("DisableVisibility 删除失败: %v\n输出: %s", err, string(out)))
+			return false
+		}
+		return true
+	}
+
+	newVal := parts[0]
+	for i := 1; i < len(parts); i++ {
+		newVal += ";" + parts[i]
+	}
+	cmd := exec.Command("reg", "add", `HKLM\SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\Explorer`,
+		"/v", "SettingsPageVisibility", "/t", "REG_SZ", "/d", newVal, "/f")
+	utils.HideWindow(cmd)
+	if out, err := cmd.CombinedOutput(); err != nil {
+		utils.LogError(fmt.Sprintf("DisableVisibility 更新失败: %v\n输出: %s", err, string(out)))
+		return false
+	}
+	return true
+}
+
+func GetDriverUpdatesStatus() bool {
+	val, err := utils.RegReadDWord(registry.LOCAL_MACHINE,
+		`SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata`,
+		"PreventDeviceMetadataFromNetwork")
+	if err != nil || val == 0 {
+		return true
+	}
+	return false
+}
+
+func EnableDriverUpdates() bool {
+	utils.RegSetDWord(registry.LOCAL_MACHINE,
+		`SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata`,
+		"PreventDeviceMetadataFromNetwork", 0)
+	utils.RegDeleteValue(registry.LOCAL_MACHINE,
+		`SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate`,
+		"ExcludeWUDriversInQualityUpdate")
+	utils.RegDeleteValue(registry.LOCAL_MACHINE,
+		`SOFTWARE\Microsoft\WindowsUpdate\UX\Settings`,
+		"ExcludeWUDriversInQualityUpdate")
+	return true
+}
+
+func DisableDriverUpdates() bool {
+	utils.RegSetDWord(registry.LOCAL_MACHINE,
+		`SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata`,
+		"PreventDeviceMetadataFromNetwork", 1)
+	utils.RegSetDWord(registry.LOCAL_MACHINE,
+		`SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate`,
+		"ExcludeWUDriversInQualityUpdate", 1)
+	utils.RegSetDWord(registry.LOCAL_MACHINE,
+		`SOFTWARE\Microsoft\WindowsUpdate\UX\Settings`,
+		"ExcludeWUDriversInQualityUpdate", 1)
+	return true
+}
+
+// --- 保留原有内容 ---
+
+func UpdateCertificates() string {
 	b := make([]byte, 8)
 	rand.Read(b)
 	tmpFile := filepath.Join(os.TempDir(), fmt.Sprintf("certs_%x.sst", b))
 	defer os.Remove(tmpFile)
 
-	// 调用 CertUtil 下载证书
 	cmd := exec.Command("CertUtil", "-generateSSTFromWU", tmpFile)
-	hideWindow(cmd)
+	utils.HideWindow(cmd)
 	if out, err := cmd.CombinedOutput(); err != nil {
 		return fmt.Sprintf("下载证书失败: %v\n输出: %s", err, string(out))
 	}
 
-	// 检查文件是否有效
 	stat, err := os.Stat(tmpFile)
 	if err != nil || stat.Size() == 0 {
 		return "证书文件无效或为空"
 	}
 
-	// 导入到受信任根证书存储
 	importRoot := exec.Command("powershell", "-Command",
 		fmt.Sprintf(`Import-Certificate -FilePath "%s" -CertStoreLocation Cert:\LocalMachine\Root`, tmpFile))
-	hideWindow(importRoot)
+	utils.HideWindow(importRoot)
 	if out, err := importRoot.CombinedOutput(); err != nil {
 		return fmt.Sprintf("导入根证书失败: %v\n输出: %s", err, string(out))
 	}
 
-	// 导入到受信任颁发机构存储
 	importAuth := exec.Command("powershell", "-Command",
 		fmt.Sprintf(`Import-Certificate -FilePath "%s" -CertStoreLocation Cert:\LocalMachine\AuthRoot`, tmpFile))
-	hideWindow(importAuth)
+	utils.HideWindow(importAuth)
 	if out, err := importAuth.CombinedOutput(); err != nil {
 		return fmt.Sprintf("导入颁发机构证书失败: %v\n输出: %s", err, string(out))
 	}
@@ -57,16 +276,14 @@ func UpdateCertificates() string {
 	return "证书更新成功"
 }
 
-// KGLData 知识图谱库数据结构
 type KGLData struct {
-	Version              string
-	ActivateOnUpdate     bool
-	Hash                 string
-	URI                  string
-	VersionCheckTimeout  int
+	Version             string
+	ActivateOnUpdate    bool
+	Hash                string
+	URI                 string
+	VersionCheckTimeout int
 }
 
-// FetchKGL 从微软 API 获取最新 KGL 数据
 func FetchKGL() (*KGLData, string) {
 	client := &http.Client{Timeout: 15 * time.Second}
 	resp, err := client.Get("https://settings.data.microsoft.com/settings/v3.0/xbox/knowngamelist")
@@ -91,11 +308,11 @@ func FetchKGL() (*KGLData, string) {
 	}
 
 	var raw struct {
-		Version              string `json:"version"`
-		ActivateOnUpdate     bool   `json:"activateOnUpdate"`
-		Hash                 string `json:"hash"`
-		URI                  string `json:"uri"`
-		VersionCheckTimeout  int    `json:"versionCheckTimeout"`
+		Version             string `json:"version"`
+		ActivateOnUpdate    bool   `json:"activateOnUpdate"`
+		Hash                string `json:"hash"`
+		URI                 string `json:"uri"`
+		VersionCheckTimeout int    `json:"versionCheckTimeout"`
 	}
 	if err := json.Unmarshal(settingsRaw, &raw); err != nil {
 		return nil, fmt.Sprintf("KGL settings 解析失败: %v", err)

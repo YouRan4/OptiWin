@@ -5,16 +5,21 @@
 </p>
 
 <p align="center">
-  适用于任何 Windows 系统的个性化调整工具箱
+  适用于 Windows 系统的个性化调整工具箱
 </p>
+
+## 截图
+
+![Screenshot](docs/screenshot.png)
 
 ## 功能
 
-- **安全** — Windows Defender、UAC、VBS、内存完整性设置
-- **性能** — 电源计划、Superfetch、内存压缩、C-State、全屏/窗口优化、MPO
-- **个性化** — 通知、上下文菜单、Explorer 设置、快捷方式外观
-- **实用工具** — 休眠、快速启动、Windows 照片查看器、Edge 卸载、WebView2
-- **更新** — 证书更新、KGL 更新、Windows 更新策略
+- **首页** — 项目信息 + 系统信息（OS / CPU / 内存 / IP）
+- **安全** — Windows Defender / UAC / VBS / 内存完整性
+- **性能** — 电源计划 / C-State / Superfetch / 内存压缩 / 全屏优化 / 窗口优化 / MPO / 着色器缓存
+- **个性化** — 通知 / 气球通知 / 边缘滑动 / 上下文菜单 / Explorer 主页和图库 / 快捷方式外观
+- **实用工具** — 休眠 / 快速启动 / 照片查看器 / Edge 卸载 / WebView2 / 安全模式 / 进入 BIOS
+- **更新** — 证书更新 / KGL 更新 / 暂停更新 / 隐藏更新页面 / 驱动更新策略 / 更新通道切换
 
 ## 基于 [meetrevision/revision-tool](https://github.com/meetrevision/revision-tool) 二次开发
 
@@ -25,14 +30,8 @@
 ## 构建
 
 ```bash
-# 开发
-cd frontend && npm run dev
-
-# 编译 Linux
-wails build -tags webkit2_41
-
-# 交叉编译 Windows
-GOOS=windows GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ wails build -tags webkit2_41
+# 编译 Windows
+GOOS=windows GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64-mingw32-g++ wails build -ldflags="-s -w" -trimpath
 ```
 
 ## 技术栈
@@ -42,3 +41,9 @@ GOOS=windows GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64
 | 后端 | Go + Wails |
 | 前端 | Vue 3 + Naive UI |
 | 注册表 | golang.org/x/sys/windows/registry |
+
+## 提交
+
+```bash
+git add . && git commit -m "v1.1 - ..." && git push
+```

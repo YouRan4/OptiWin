@@ -3,6 +3,8 @@
 
 export function CheckUpdate():Promise<string>;
 
+export function ClearShaderCache():Promise<string>;
+
 export function DisableCState():Promise<boolean>;
 
 export function DisableDefender():Promise<boolean>;
@@ -115,9 +117,13 @@ export function GetRemoveShortcutTextStatus():Promise<boolean>;
 
 export function GetSuperfetchStatus():Promise<boolean>;
 
+export function GetSystemInfo():Promise<string>;
+
 export function GetUacStatus():Promise<boolean>;
 
 export function GetUltimatePerformanceStatus():Promise<boolean>;
+
+export function GetUpdateChannel():Promise<string>;
 
 export function GetVbsStatus():Promise<boolean>;
 
@@ -128,6 +134,10 @@ export function GetWebView2Version():Promise<string>;
 export function GetWindowedOptimizationStatus():Promise<boolean>;
 
 export function InstallWebView2():Promise<string>;
+
+export function RebootSystem():Promise<boolean>;
+
+export function RebootToBios():Promise<boolean>;
 
 export function RestartExplorer():Promise<string>;
 
@@ -149,17 +159,9 @@ export function SetRemoveShortcutArrow(arg1:boolean):Promise<boolean>;
 
 export function SetRemoveShortcutText(arg1:boolean):Promise<boolean>;
 
-export function ToggleDriverUpdates(arg1:boolean):Promise<boolean>;
+export function SetSafeBoot(arg1:string):Promise<boolean>;
 
-export function ToggleHibernate(arg1:boolean):Promise<boolean>;
-
-export function ToggleMemCompress(arg1:boolean):Promise<boolean>;
-
-export function ToggleNotification(arg1:string):Promise<boolean>;
-
-export function TogglePowerPlan(arg1:boolean):Promise<boolean>;
-
-export function ToggleSuperfetch(arg1:boolean):Promise<boolean>;
+export function SetUpdateChannel(arg1:string):Promise<boolean>;
 
 export function UninstallEdge():Promise<string>;
 

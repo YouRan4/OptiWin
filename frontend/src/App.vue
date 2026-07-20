@@ -134,8 +134,6 @@ body, #app {
 .content { flex: 1; overflow-y: auto; padding: 32px 40px; }
 
 h2 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
-.subtitle { color: var(--text2); margin-bottom: 28px; font-size: 14px; }
-
 /* 设置卡片 */
 .setting-card {
   background: var(--card-bg); border: 1px solid var(--border);
@@ -163,23 +161,6 @@ h2 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
 .setting-row + .setting-row { border-top: 1px solid var(--border); }
 .setting-row .row-label { font-size: 14px; }
 .setting-row .row-desc { font-size: 12px; color: var(--text2); margin-top: 1px; }
-
-/* Home page cards */
-.card {
-  background: var(--card-bg); border: 1px solid var(--border);
-  border-radius: 8px; padding: 18px 24px; margin-bottom: 8px;
-  cursor: pointer; display: flex; align-items: center;
-  justify-content: space-between;
-}
-.card:hover { background: var(--hover); }
-.card-title { font-size: 16px; font-weight: 600; }
-.card-desc { font-size: 14px; color: var(--text2); margin-top: 4px; }
-.arrow { font-size: 20px; color: var(--text2); }
-
-/* Standalone card (no children) */
-.setting-standalone { padding: 16px 20px; display: flex; align-items: center; justify-content: space-between; }
-.setting-standalone .sa-title { font-size: 15px; font-weight: 600; }
-.setting-standalone .sa-desc { font-size: 12px; color: var(--text2); margin-top: 1px; }
 
 /* Page transition */
 .page-enter-active, .page-leave-active { transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }

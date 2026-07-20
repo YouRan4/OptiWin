@@ -6,6 +6,10 @@ export function CheckUpdate() {
   return window['go']['main']['App']['CheckUpdate']();
 }
 
+export function ClearShaderCache() {
+  return window['go']['main']['App']['ClearShaderCache']();
+}
+
 export function DisableCState() {
   return window['go']['main']['App']['DisableCState']();
 }
@@ -230,12 +234,20 @@ export function GetSuperfetchStatus() {
   return window['go']['main']['App']['GetSuperfetchStatus']();
 }
 
+export function GetSystemInfo() {
+  return window['go']['main']['App']['GetSystemInfo']();
+}
+
 export function GetUacStatus() {
   return window['go']['main']['App']['GetUacStatus']();
 }
 
 export function GetUltimatePerformanceStatus() {
   return window['go']['main']['App']['GetUltimatePerformanceStatus']();
+}
+
+export function GetUpdateChannel() {
+  return window['go']['main']['App']['GetUpdateChannel']();
 }
 
 export function GetVbsStatus() {
@@ -256,6 +268,14 @@ export function GetWindowedOptimizationStatus() {
 
 export function InstallWebView2() {
   return window['go']['main']['App']['InstallWebView2']();
+}
+
+export function RebootSystem() {
+  return window['go']['main']['App']['RebootSystem']();
+}
+
+export function RebootToBios() {
+  return window['go']['main']['App']['RebootToBios']();
 }
 
 export function RestartExplorer() {
@@ -298,28 +318,12 @@ export function SetRemoveShortcutText(arg1) {
   return window['go']['main']['App']['SetRemoveShortcutText'](arg1);
 }
 
-export function ToggleDriverUpdates(arg1) {
-  return window['go']['main']['App']['ToggleDriverUpdates'](arg1);
+export function SetSafeBoot(arg1) {
+  return window['go']['main']['App']['SetSafeBoot'](arg1);
 }
 
-export function ToggleHibernate(arg1) {
-  return window['go']['main']['App']['ToggleHibernate'](arg1);
-}
-
-export function ToggleMemCompress(arg1) {
-  return window['go']['main']['App']['ToggleMemCompress'](arg1);
-}
-
-export function ToggleNotification(arg1) {
-  return window['go']['main']['App']['ToggleNotification'](arg1);
-}
-
-export function TogglePowerPlan(arg1) {
-  return window['go']['main']['App']['TogglePowerPlan'](arg1);
-}
-
-export function ToggleSuperfetch(arg1) {
-  return window['go']['main']['App']['ToggleSuperfetch'](arg1);
+export function SetUpdateChannel(arg1) {
+  return window['go']['main']['App']['SetUpdateChannel'](arg1);
 }
 
 export function UninstallEdge() {

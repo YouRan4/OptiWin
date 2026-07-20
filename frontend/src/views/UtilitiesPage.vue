@@ -6,6 +6,7 @@ import {
   GetFastStartupStatus, EnableFastStartup, DisableFastStartup,
   GetPhotoViewerStatus, EnablePhotoViewer, DisablePhotoViewer,
   UninstallEdge, GetWebView2Version, InstallWebView2,
+  SetSafeBoot, RebootSystem, RebootToBios,
 } from '../../wailsjs/go/main/App'
 
 const notify = useNotification()
@@ -14,7 +15,6 @@ const hibernate = ref(false)
 const fastStartup = ref(true)
 const photoViewer = ref(false)
 const webviewVer = ref('加载中...')
-
 onMounted(async () => {
   hibernate.value = await GetHibernateStatus()
   fastStartup.value = await GetFastStartupStatus()
@@ -49,6 +49,22 @@ async function onInstallWebView2() {
   notify.success({ title: 'WebView2', description: msg, duration: 8000 })
   webviewVer.value = await GetWebView2Version()
 }
+
+async function onSafeBoot(mode: string) {
+  const tips: Record<string,string> = {
+    minimal: '即将以安全模式重启',
+    network: '即将以带网络的安全模式重启',
+    normal: '即将以正常模式重启',
+  }
+  await SetSafeBoot(mode)
+  notify.warning({ title: tips[mode] || '即将重启', description: '请保存好你的工作', duration: 5000 })
+  await RebootSystem()
+}
+
+async function onBios() {
+  notify.warning({ title: '即将进入 BIOS', description: '系统将在重启后进入 UEFI 固件设置，下次开机恢复正常', duration: 5000 })
+  await RebootToBios()
+}
 </script>
 
 <template>
@@ -71,5 +87,27 @@ async function onInstallWebView2() {
         <n-button size="small" @click="onInstallWebView2">安装/升级</n-button>
       </div>
     </div>
+    <div class="setting-card">
+      <div class="setting-card-header">
+        <span class="header-title">启动选项</span>
+        <span class="header-desc">安全模式与系统重启</span>
+        <span class="warning-text">— 请确定你知道你在干什么</span>
+      </div>
+      <div class="boot-buttons">
+        <n-button size="small" strong style="flex:1" @click="onSafeBoot('minimal')">重启至安全模式</n-button>
+        <n-button size="small" strong style="flex:1" @click="onSafeBoot('network')">重启至带网络连接的安全模式</n-button>
+        <n-button size="small" strong style="flex:1" @click="onSafeBoot('normal')">重启至正常模式</n-button>
+        <n-button size="small" strong style="flex:1" type="warning" @click="onBios">进入 BIOS（重启）</n-button>
+      </div>
+    </div>
   </div>
 </template>
+
+<style scoped>
+.warning-text { font-size: 12px; color: #ffb347; margin-left: auto; }
+.boot-buttons {
+  padding: 12px 20px 16px;
+  display: flex;
+  gap: 8px;
+}
+</style>
