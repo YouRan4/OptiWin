@@ -218,6 +218,10 @@ export function GetPhotoViewerStatus() {
   return window['go']['main']['App']['GetPhotoViewerStatus']();
 }
 
+export function GetProxyInfo() {
+  return window['go']['main']['App']['GetProxyInfo']();
+}
+
 export function GetRemoveShieldStatus() {
   return window['go']['main']['App']['GetRemoveShieldStatus']();
 }

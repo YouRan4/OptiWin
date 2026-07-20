@@ -109,6 +109,8 @@ export function GetPauseUpdatesStatus():Promise<boolean>;
 
 export function GetPhotoViewerStatus():Promise<boolean>;
 
+export function GetProxyInfo():Promise<string>;
+
 export function GetRemoveShieldStatus():Promise<boolean>;
 
 export function GetRemoveShortcutArrowStatus():Promise<boolean>;

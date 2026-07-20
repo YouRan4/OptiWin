@@ -4,7 +4,6 @@ package services
 import (
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -145,7 +144,7 @@ func InstallWebView2() string {
 	tmp := os.TempDir() + `\MicrosoftEdgeWebView2Setup.exe`
 	url := "https://go.microsoft.com/fwlink/p/?LinkId=2124703"
 
-	out, err := http.Get(url)
+	out, err := utils.GetHttpClient().Get(url)
 	if err != nil {
 		return "下载失败: " + err.Error()
 	}

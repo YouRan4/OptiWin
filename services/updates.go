@@ -6,11 +6,9 @@ import (
 	"encoding/json"
 	"fmt"
 	"io"
-	"net/http"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"time"
 	"golang.org/x/sys/windows/registry"
 	"OptiWin/utils"
 )
@@ -285,7 +283,7 @@ type KGLData struct {
 }
 
 func FetchKGL() (*KGLData, string) {
-	client := &http.Client{Timeout: 15 * time.Second}
+	client := utils.GetHttpClient()
 	resp, err := client.Get("https://settings.data.microsoft.com/settings/v3.0/xbox/knowngamelist")
 	if err != nil {
 		return nil, fmt.Sprintf("KGL 请求失败: %v", err)

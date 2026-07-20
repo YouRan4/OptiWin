@@ -1,7 +1,8 @@
 <script setup lang="ts">
 import { ref, onMounted, h } from 'vue'
 import { NButton, useDialog, useNotification } from 'naive-ui'
-import { GetCurrentVersion, CheckUpdate, GetSystemInfo } from '../../wailsjs/go/main/App'
+import { BrowserOpenURL } from '../../wailsjs/runtime/runtime'
+import { GetCurrentVersion, CheckUpdate, GetSystemInfo, GetProxyInfo } from '../../wailsjs/go/main/App'
 import { marked } from 'marked'
 
 const dialog = useDialog()
@@ -9,10 +10,12 @@ const notify = useNotification()
 const version = ref('')
 const checking = ref(false)
 const info = ref({ os: '', build: '', cpu: '', ram: '', ipv4: '', ipv6: '' })
+const proxyInfo = ref('')
 let checkedAuto = false
 
 onMounted(async () => {
   version.value = await GetCurrentVersion()
+  proxyInfo.value = await GetProxyInfo()
   const raw = await GetSystemInfo()
   try { info.value = JSON.parse(raw) } catch {}
 
@@ -20,7 +23,7 @@ onMounted(async () => {
   checkedAuto = true
   const skipped = localStorage.getItem('optiwin_skip_version')
   const result = await CheckUpdate()
-  if (result) {
+  if (result && result !== 'same') {
     const r = JSON.parse(result)
     if (r.version === skipped) return
     showUpdateDialog(r)
@@ -29,14 +32,14 @@ onMounted(async () => {
 
 function showUpdateDialog(r: { version: string; body: string; url: string }) {
   const htmlBody = marked.parse(r.body || '暂无更新说明')
-  dialog.warning({
+  const d = dialog.warning({
     title: `发现新版本 ${r.version}`,
     style: 'width:70vw;max-width:800px',
     content: () => h('div', { class: 'md-content', innerHTML: htmlBody }),
     action: () =>
       h('div', { style: 'display:flex;gap:8px;justify-content:flex-end;margin-top:12px' }, [
         h(NButton, { size: 'small', type: 'primary', onClick: () => {
-          (window as any).runtime?.BrowserOpenURL(r.url)
+          BrowserOpenURL(r.url); d.destroy()
         }}, { default: () => '前往下载' }),
         h(NButton, { size: 'small', onClick: () => {
           localStorage.setItem('optiwin_skip_version', r.version); d.destroy()
@@ -58,6 +61,10 @@ async function onCheckUpdate() {
   const result = await CheckUpdate()
   checking.value = false
   if (!result) {
+    notify.error({ title: '检查更新', description: '无法连接到 GitHub，请检查网络设置', duration: 5000 })
+    return
+  }
+  if (result === 'same') {
     notify.success({ title: '更新检查', description: '已是最新版本', duration: 4000 })
     return
   }
@@ -112,6 +119,10 @@ async function onCheckUpdate() {
           <div class="info-row">
             <span class="info-label">IPv6</span>
             <span class="info-value copy-ip" @click="copyText(info.ipv6, 'IPv6')">{{ info.ipv6 }}</span>
+          </div>
+          <div class="info-row">
+            <span class="info-label">代理</span>
+            <span class="info-value" style="font-size:12px">{{ proxyInfo }}</span>
           </div>
         </div>
       </div>
