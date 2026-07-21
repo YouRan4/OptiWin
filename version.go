@@ -5,7 +5,7 @@ import (
 	"strings"
 )
 
-const CurrentVersion = "v1.3"
+const CurrentVersion = "v1.3.2"
 
 func parseVersion(v string) (major, minor, patch int) {
 	v = strings.TrimPrefix(v, "v")

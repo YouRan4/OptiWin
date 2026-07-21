@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
-import { computed } from 'vue'
+import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NConfigProvider, darkTheme, zhCN, dateZhCN, enUS, dateEnUS, NNotificationProvider, NDialogProvider } from 'naive-ui'
 
@@ -8,10 +8,23 @@ const router = useRouter()
 const route = useRoute()
 const { t: i18n, locale } = useI18n()
 
-// 固定深色主题
-const theme = darkTheme
+const isDark = ref(true)
 
-// 导航菜单
+onMounted(() => {
+  const mq = window.matchMedia('(prefers-color-scheme: dark)')
+  isDark.value = mq.matches
+  applyTheme(isDark.value)
+  mq.addEventListener('change', e => {
+    isDark.value = e.matches
+    applyTheme(e.matches)
+  })
+})
+
+function applyTheme(dark: boolean) {
+  document.documentElement.setAttribute('data-theme', dark ? 'dark' : 'light')
+}
+
+const theme = computed(() => isDark.value ? darkTheme : undefined)
 const navItems = computed(() => [
   { path: '/', name: 'home', label: i18n('nav.home') },
   { path: '/security', name: 'security', label: i18n('nav.security') },
@@ -24,16 +37,13 @@ const navItems = computed(() => [
 const naiveLocale = computed(() => locale.value === 'zh' ? zhCN : enUS)
 const naiveDateLocale = computed(() => locale.value === 'zh' ? dateZhCN : dateEnUS)
 
-// 当前选中的导航项
 const activeName = computed(() => route.name as string || 'home')
 
-// 页面切换
 function navigate(path: string) {
   if (route.path === path) return
   router.push(path).catch(() => {})
 }
 
-// 窗口控制（通过 Wails 运行时）
 function wm() { (window as any).runtime?.WindowMinimise() }
 function wq() { (window as any).runtime?.Quit() }
 
@@ -80,8 +90,8 @@ function reExplorer() {
 <style>
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
-/* 深色主题 CSS 变量 */
-:root {
+/* 深色主题 */
+:root[data-theme="dark"] {
   --accent: #60CDFF;
   --border: rgba(255,255,255,0.06);
   --text: #E5E5E5;
@@ -90,6 +100,18 @@ function reExplorer() {
   --active: rgba(96,205,255,0.12);
   --card-bg: rgba(45,45,45,0.7);
   --section-bg: rgba(55,55,55,0.5);
+}
+
+/* 浅色主题 */
+:root[data-theme="light"] {
+  --accent: #1890FF;
+  --border: rgba(0,0,0,0.1);
+  --text: #1A1A1A;
+  --text2: rgba(0,0,0,0.45);
+  --hover: rgba(0,0,0,0.04);
+  --active: rgba(24,144,255,0.1);
+  --card-bg: rgba(255,255,255,0.85);
+  --section-bg: rgba(245,245,245,0.85);
 }
 
 body, #app {
@@ -104,7 +126,8 @@ body, #app {
 .titlebar {
   display: flex; align-items: center;
   padding: 0 8px 0 16px; height: 48px; flex-shrink: 0; user-select: none;
-  background: rgba(30,30,30,0.95); border-bottom: 1px solid var(--border);
+  background: transparent; border-bottom: none;
+  box-shadow: 0 1px 8px rgba(0,0,0,0.15);
   gap: 24px; z-index: 10;
 }
 .t-left { display: flex; align-items: center; }
@@ -139,7 +162,6 @@ body, #app {
 .content { flex: 1; overflow-y: auto; padding: 32px 40px; }
 
 h2 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
-/* 设置卡片 */
 .setting-card {
   background: var(--card-bg); border: 1px solid var(--border);
   border-radius: 8px; margin-bottom: 12px; overflow: hidden;
@@ -158,7 +180,6 @@ h2 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
 .setting-card-header .header-title { font-size: 16px; font-weight: 600; }
 .setting-card-header .header-desc { font-size: 12px; color: var(--text2); }
 
-/* 开关行 */
 .setting-row {
   display: flex; align-items: center; justify-content: space-between;
   padding: 12px 20px 12px 28px;
@@ -167,13 +188,14 @@ h2 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
 .setting-row .row-label { font-size: 14px; }
 .setting-row .row-desc { font-size: 12px; color: var(--text2); margin-top: 1px; }
 
-/* Page transition */
 .page-enter-active, .page-leave-active { transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 .page-enter-from { opacity: 0; transform: translateY(12px); }
 .page-leave-to { opacity: 0; transform: translateY(-12px); }
 
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 4px; }
+[data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
 </style>

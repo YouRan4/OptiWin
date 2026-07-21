@@ -22,8 +22,7 @@ func main() {
 		AssetServer: &assetserver.Options{
 			Assets: assets,
 		},
-		BackgroundColour: &options.RGBA{R: 27, G: 38, B: 54, A: 1},
-		Frameless:        true, // 无边框窗口
+		Frameless: true, // 无边框窗口
 		Windows: &windows.Options{
 			WebviewIsTransparent: true,         // WebView2 透明背景
 			WindowIsTranslucent:  true,         // 窗口半透明
