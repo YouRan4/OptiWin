@@ -12,11 +12,7 @@ import (
 //go:embed all:frontend/dist
 var assets embed.FS
 
-//go:embed build/webview2setup.exe
-var webview2Installer []byte
-
 func main() {
-	ensureWebView2()
 	app := NewApp()
 
 	err := wails.Run(&options.App{
