@@ -33,19 +33,20 @@ jobs:
         run: npm install && npm run build
 
       - name: Build Windows exe
-        run: wails build -tags webkit2_41 -o OptiWin.exe -ldflags="-s -w" -trimpath
+        run: |
+          wails build -tags webkit2_41 -o OptiWin-${{ github.ref_name }}.exe -ldflags="-s -w" -trimpath
 
       - name: Install UPX
         run: choco install upx -y
 
       - name: Compress exe
-        run: upx --ultra-brute build/bin/OptiWin.exe
+        run: upx --ultra-brute build/bin/OptiWin-${{ github.ref_name }}.exe
 
       - name: Upload artifact
         uses: actions/upload-artifact@v4
         with:
-          name: OptiWin-Windows
-          path: build/bin/OptiWin.exe
+          name: OptiWin-${{ github.ref_name }}
+          path: build/bin/OptiWin-${{ github.ref_name }}.exe
 
   release:
     needs: build
@@ -54,10 +55,10 @@ jobs:
     steps:
       - uses: actions/download-artifact@v4
         with:
-          name: OptiWin-Windows
+          name: OptiWin-${{ github.ref_name }}
 
       - name: Create Release
         uses: softprops/action-gh-release@v2
         with:
-          files: OptiWin.exe
+          files: OptiWin-${{ github.ref_name }}.exe
           generate_release_notes: true
