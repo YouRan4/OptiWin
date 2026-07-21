@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { NSwitch, NButton, useNotification } from 'naive-ui'
 import {
   GetUltimatePerformanceStatus, EnableUltimatePerformance, DisableUltimatePerformance,
@@ -12,6 +13,7 @@ import {
   ClearShaderCache,
 } from '../../wailsjs/go/main/App'
 
+const { t: i18n } = useI18n()
 const notify = useNotification()
 
 const reviPlan = ref(false)
@@ -35,7 +37,7 @@ onMounted(async () => {
 function showRestartNotice(title: string) {
   notify.success({
     title,
-    description: '需要重启系统才能生效',
+    description: i18n('perf.restartRequired'),
     duration: 6000,
   })
 }
@@ -55,7 +57,7 @@ async function onSuperfetch(v: boolean) {
 async function onMemCompress(v: boolean) {
   if (v) await EnableMemoryCompression(); else await DisableMemoryCompression()
   memCompress.value = await GetMemoryCompressionStatus()
-  showRestartNotice('内存压缩')
+  showRestartNotice(i18n('perf.memCompress'))
 }
 async function onFullscreen(v: boolean) {
   if (v) await EnableFullscreenOptimization(); else await DisableFullscreenOptimization()
@@ -72,31 +74,31 @@ async function onMpo(v: boolean) {
 
 async function onClearShaderCache() {
   const msg = await ClearShaderCache()
-  notify.success({ title: '着色器缓存', description: msg, duration: 5000 })
+  notify.success({ title: i18n('perf.shaderCache'), description: msg, duration: 5000 })
 }
 </script>
 
 <template>
   <div class="page">
-    <h2>性能优化</h2>
+    <h2>{{ i18n('perf.title') }}</h2>
     <div class="setting-card">
-      <div class="setting-card-header"><span class="header-title">电源计划</span><span class="header-desc">控制 CPU 电源管理</span></div>
-      <div class="setting-row"><div><div class="row-label">卓越性能</div><div class="row-desc">启用 Windows 内置的卓越性能电源计划</div></div><n-switch v-model:value="reviPlan" @update:value="onPowerPlan" /></div>
-      <div class="setting-row"><div><div class="row-label">禁用 C State</div><div class="row-desc">禁用 CPU 深度睡眠状态以减少延迟</div></div><n-switch v-model:value="cstate" @update:value="onCState" /></div>
+      <div class="setting-card-header"><span class="header-title">{{ i18n('perf.powerPlan') }}</span><span class="header-desc">{{ i18n('perf.powerPlanDesc') }}</span></div>
+      <div class="setting-row"><div><div class="row-label">{{ i18n('perf.ultimatePerf') }}</div><div class="row-desc">{{ i18n('perf.ultimatePerfDesc') }}</div></div><n-switch v-model:value="reviPlan" @update:value="onPowerPlan" /></div>
+      <div class="setting-row"><div><div class="row-label">{{ i18n('perf.cState') }}</div><div class="row-desc">{{ i18n('perf.cStateDesc') }}</div></div><n-switch v-model:value="cstate" @update:value="onCState" /></div>
     </div>
     <div class="setting-card">
-      <div class="setting-card-header"><span class="header-title">内存与存储</span><span class="header-desc">优化内存压缩和预缓存</span></div>
-      <div class="setting-row"><div><div class="row-label">Superfetch</div><div class="row-desc">预加载常用应用到内存，加快启动速度</div></div><n-switch v-model:value="superfetch" @update:value="onSuperfetch" /></div>
-      <div class="setting-row"><div><div class="row-label">内存压缩</div><div class="row-desc">压缩未用内存页面</div></div><n-switch v-model:value="memCompress" @update:value="onMemCompress" /></div>
+      <div class="setting-card-header"><span class="header-title">{{ i18n('perf.memory') }}</span><span class="header-desc">{{ i18n('perf.memoryDesc') }}</span></div>
+      <div class="setting-row"><div><div class="row-label">{{ i18n('perf.superfetch') }}</div><div class="row-desc">{{ i18n('perf.superfetchDesc') }}</div></div><n-switch v-model:value="superfetch" @update:value="onSuperfetch" /></div>
+      <div class="setting-row"><div><div class="row-label">{{ i18n('perf.memCompress') }}</div><div class="row-desc">{{ i18n('perf.memCompressDesc') }}</div></div><n-switch v-model:value="memCompress" @update:value="onMemCompress" /></div>
     </div>
     <div class="setting-card">
-      <div class="setting-card-header"><span class="header-title">显示</span><span class="header-desc">优化游戏和应用渲染</span></div>
-      <div class="setting-row"><div><div class="row-label">全屏优化</div><div class="row-desc">为全屏游戏和应用提供更低延迟</div></div><n-switch v-model:value="fullscreen" @update:value="onFullscreen" /></div>
-      <div class="setting-row"><div><div class="row-label">窗口优化</div><div class="row-desc">优化窗口化应用的渲染和输入延迟</div></div><n-switch v-model:value="windowOpt" @update:value="onWindowed" /></div>
-      <div class="setting-row"><div><div class="row-label">MPO</div><div class="row-desc">多平面覆盖技术，减少窗口化游戏的输入延迟</div></div><n-switch v-model:value="mpo" @update:value="onMpo" /></div>
+      <div class="setting-card-header"><span class="header-title">{{ i18n('perf.display') }}</span><span class="header-desc">{{ i18n('perf.displayDesc') }}</span></div>
+      <div class="setting-row"><div><div class="row-label">{{ i18n('perf.fullscreen') }}</div><div class="row-desc">{{ i18n('perf.fullscreenDesc') }}</div></div><n-switch v-model:value="fullscreen" @update:value="onFullscreen" /></div>
+      <div class="setting-row"><div><div class="row-label">{{ i18n('perf.windowed') }}</div><div class="row-desc">{{ i18n('perf.windowedDesc') }}</div></div><n-switch v-model:value="windowOpt" @update:value="onWindowed" /></div>
+      <div class="setting-row"><div><div class="row-label">{{ i18n('perf.mpo') }}</div><div class="row-desc">{{ i18n('perf.mpoDesc') }}</div></div><n-switch v-model:value="mpo" @update:value="onMpo" /></div>
       <div class="setting-row">
-        <div><div class="row-label">清理着色器缓存</div><div class="row-desc">清理 NVIDIA/AMD GPU 着色器缓存，解决画面卡顿和渲染异常</div></div>
-        <n-button size="small" @click="onClearShaderCache">清理</n-button>
+        <div><div class="row-label">{{ i18n('perf.clearShader') }}</div><div class="row-desc">{{ i18n('perf.clearShaderDesc') }}</div></div>
+        <n-button size="small" @click="onClearShaderCache">{{ i18n('perf.clear') }}</n-button>
       </div>
     </div>
   </div>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { NSwitch, NButton, useNotification } from 'naive-ui'
 import {
   GetHibernateStatus, EnableHibernate, DisableHibernate,
@@ -9,12 +10,13 @@ import {
   SetSafeBoot, RebootSystem, RebootToBios,
 } from '../../wailsjs/go/main/App'
 
+const { t: i18n } = useI18n()
 const notify = useNotification()
 
 const hibernate = ref(false)
 const fastStartup = ref(true)
 const photoViewer = ref(false)
-const webviewVer = ref('加载中...')
+const webviewVer = ref('')
 onMounted(async () => {
   hibernate.value = await GetHibernateStatus()
   fastStartup.value = await GetFastStartupStatus()
@@ -39,11 +41,11 @@ async function onPhotoViewer(v: boolean) {
 
 async function onUninstallEdge() {
   const msg = await UninstallEdge()
-  notify.info({ title: '卸载 Edge', description: msg, duration: 10000 })
+  notify.info({ title: i18n('util.uninstallEdge'), description: msg, duration: 10000 })
 }
 
 async function onInstallWebView2() {
-  const n = notify.info({ title: 'WebView2', description: '正在下载安装...', duration: 0 })
+  const n = notify.info({ title: 'WebView2', description: i18n('util.downloading'), duration: 0 })
   const msg = await InstallWebView2()
   n.destroy()
   notify.success({ title: 'WebView2', description: msg, duration: 8000 })
@@ -52,52 +54,52 @@ async function onInstallWebView2() {
 
 async function onSafeBoot(mode: string) {
   const tips: Record<string,string> = {
-    minimal: '即将以安全模式重启',
-    network: '即将以带网络的安全模式重启',
-    normal: '即将以正常模式重启',
+    minimal: i18n('util.rebootSafeMode'),
+    network: i18n('util.rebootSafeModeNet'),
+    normal: i18n('util.rebootNormal'),
   }
   await SetSafeBoot(mode)
-  notify.warning({ title: tips[mode] || '即将重启', description: '请保存好你的工作', duration: 5000 })
+  notify.warning({ title: tips[mode] || i18n('util.rebooting'), description: i18n('util.saveWork'), duration: 5000 })
   await RebootSystem()
 }
 
 async function onBios() {
-  notify.warning({ title: '即将进入 BIOS', description: '系统将在重启后进入 UEFI 固件设置，下次开机恢复正常', duration: 5000 })
+  notify.warning({ title: i18n('util.enterBios'), description: i18n('util.biosDesc'), duration: 5000 })
   await RebootToBios()
 }
 </script>
 
 <template>
   <div class="page">
-    <h2>实用工具</h2>
+    <h2>{{ i18n('util.title') }}</h2>
     <div class="setting-card">
-      <div class="setting-card-header"><span class="header-title">电源管理</span><span class="header-desc">休眠和启动设置</span></div>
-      <div class="setting-row"><div><div class="row-label">休眠</div><div class="row-desc">保存系统状态到磁盘并完全关闭电源</div></div><n-switch v-model:value="hibernate" @update:value="onHibernate" /></div>
-      <div class="setting-row"><div><div class="row-label">快速启动</div><div class="row-desc">结合休眠实现更快的启动速度</div></div><n-switch v-model:value="fastStartup" @update:value="onFastStartup" /></div>
+      <div class="setting-card-header"><span class="header-title">{{ i18n('util.powerManagement') }}</span><span class="header-desc">{{ i18n('util.powerManagementDesc') }}</span></div>
+      <div class="setting-row"><div><div class="row-label">{{ i18n('util.hibernate') }}</div><div class="row-desc">{{ i18n('util.hibernateDesc') }}</div></div><n-switch v-model:value="hibernate" @update:value="onHibernate" /></div>
+      <div class="setting-row"><div><div class="row-label">{{ i18n('util.fastStartup') }}</div><div class="row-desc">{{ i18n('util.fastStartupDesc') }}</div></div><n-switch v-model:value="fastStartup" @update:value="onFastStartup" /></div>
     </div>
     <div class="setting-card">
-      <div class="setting-card-header"><span class="header-title">应用设置</span><span class="header-desc">默认应用和浏览器配置</span></div>
-      <div class="setting-row"><div><div class="row-label">Windows 照片查看器</div><div class="row-desc">启用经典的 Windows 照片查看器来打开图片文件</div></div><n-switch v-model:value="photoViewer" @update:value="onPhotoViewer" /></div>
+      <div class="setting-card-header"><span class="header-title">{{ i18n('util.apps') }}</span><span class="header-desc">{{ i18n('util.appsDesc') }}</span></div>
+      <div class="setting-row"><div><div class="row-label">{{ i18n('util.photoViewer') }}</div><div class="row-desc">{{ i18n('util.photoViewerDesc') }}</div></div><n-switch v-model:value="photoViewer" @update:value="onPhotoViewer" /></div>
       <div class="setting-row">
-        <div><div class="row-label">卸载 Microsoft Edge</div><div class="row-desc">安全卸载（保留 WebView2 不受影响）</div></div>
-        <n-button size="small" @click="onUninstallEdge">卸载</n-button>
+        <div><div class="row-label">{{ i18n('util.edgeLabel') }}</div><div class="row-desc">{{ i18n('util.edgeDesc') }}</div></div>
+        <n-button size="small" @click="onUninstallEdge">{{ i18n('util.uninstall') }}</n-button>
       </div>
       <div class="setting-row">
-        <div><div class="row-label">WebView2</div><div class="row-desc">当前版本: {{ webviewVer }}</div></div>
-        <n-button size="small" @click="onInstallWebView2">安装/升级</n-button>
+        <div><div class="row-label">WebView2</div><div class="row-desc">{{ i18n('util.currentVersion') }} {{ webviewVer }}</div></div>
+        <n-button size="small" @click="onInstallWebView2">{{ i18n('util.install') }}</n-button>
       </div>
     </div>
     <div class="setting-card">
       <div class="setting-card-header">
-        <span class="header-title">启动选项</span>
-        <span class="header-desc">安全模式与系统重启</span>
-        <span class="warning-text">— 请确定你知道你在干什么</span>
+        <span class="header-title">{{ i18n('util.bootOptions') }}</span>
+        <span class="header-desc">{{ i18n('util.bootDesc') }}</span>
+        <span class="warning-text">{{ i18n('util.bootWarning') }}</span>
       </div>
       <div class="boot-buttons">
-        <n-button size="small" strong style="flex:1" @click="onSafeBoot('minimal')">重启至安全模式</n-button>
-        <n-button size="small" strong style="flex:1" @click="onSafeBoot('network')">重启至带网络连接的安全模式</n-button>
-        <n-button size="small" strong style="flex:1" @click="onSafeBoot('normal')">重启至正常模式</n-button>
-        <n-button size="small" strong style="flex:1" type="warning" @click="onBios">进入 BIOS（重启）</n-button>
+        <n-button size="small" strong style="flex:1" @click="onSafeBoot('minimal')">{{ i18n('util.bootSafe') }}</n-button>
+        <n-button size="small" strong style="flex:1" @click="onSafeBoot('network')">{{ i18n('util.bootSafeNet') }}</n-button>
+        <n-button size="small" strong style="flex:1" @click="onSafeBoot('normal')">{{ i18n('util.bootNormal') }}</n-button>
+        <n-button size="small" strong style="flex:1" type="warning" @click="onBios">{{ i18n('util.bootBios') }}</n-button>
       </div>
     </div>
   </div>

@@ -1,23 +1,28 @@
 <script setup lang="ts">
 import { useRouter, useRoute } from 'vue-router'
 import { computed } from 'vue'
-import { NConfigProvider, darkTheme, zhCN, dateZhCN, NNotificationProvider, NDialogProvider } from 'naive-ui'
+import { useI18n } from 'vue-i18n'
+import { NConfigProvider, darkTheme, zhCN, dateZhCN, enUS, dateEnUS, NNotificationProvider, NDialogProvider } from 'naive-ui'
 
 const router = useRouter()
 const route = useRoute()
+const { t: i18n, locale } = useI18n()
 
 // 固定深色主题
 const theme = darkTheme
 
 // 导航菜单
-const navItems = [
-  { path: '/', name: 'home', label: '主页' },
-  { path: '/security', name: 'security', label: '安全' },
-  { path: '/performance', name: 'performance', label: '性能' },
-  { path: '/personalization', name: 'personalization', label: '个性化' },
-  { path: '/utilities', name: 'utilities', label: '实用工具' },
-  { path: '/updates', name: 'updates', label: '更新' },
-]
+const navItems = computed(() => [
+  { path: '/', name: 'home', label: i18n('nav.home') },
+  { path: '/security', name: 'security', label: i18n('nav.security') },
+  { path: '/performance', name: 'performance', label: i18n('nav.performance') },
+  { path: '/personalization', name: 'personalization', label: i18n('nav.personalization') },
+  { path: '/utilities', name: 'utilities', label: i18n('nav.utilities') },
+  { path: '/updates', name: 'updates', label: i18n('nav.updates') },
+])
+
+const naiveLocale = computed(() => locale.value === 'zh' ? zhCN : enUS)
+const naiveDateLocale = computed(() => locale.value === 'zh' ? dateZhCN : dateEnUS)
 
 // 当前选中的导航项
 const activeName = computed(() => route.name as string || 'home')
@@ -38,7 +43,7 @@ function reExplorer() {
 </script>
 
 <template>
-  <NConfigProvider :theme="theme" :locale="zhCN" :date-locale="dateZhCN">
+  <NConfigProvider :theme="theme" :locale="naiveLocale" :date-locale="naiveDateLocale">
     <n-dialog-provider>
     <n-notification-provider>
     <div class="shell">
@@ -52,7 +57,7 @@ function reExplorer() {
             @click="navigate(item.path)">{{ item.label }}</button>
         </nav>
         <div class="t-right" style="--wails-draggable: no-drag">
-          <button class="tb-btn" @click="reExplorer" title="重启资源管理器">&#x21BB;</button>
+          <button class="tb-btn" @click="reExplorer" :title="i18n('nav.restartExplorer')">&#x21BB;</button>
           <button class="tb-btn" @click="wm">&#x2014;</button>
           <button class="tb-btn tb-close" style="--wails-draggable:no-drag" @click="wq">&#x2715;</button>
         </div>

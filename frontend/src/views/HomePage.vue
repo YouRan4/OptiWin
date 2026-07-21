@@ -1,17 +1,30 @@
 <script setup lang="ts">
-import { ref, onMounted, h } from 'vue'
-import { NButton, useDialog, useNotification } from 'naive-ui'
+import { ref, onMounted, h, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
+import { NButton, NSelect, useDialog, useNotification } from 'naive-ui'
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime'
 import { GetCurrentVersion, CheckUpdate, GetSystemInfo, GetProxyInfo } from '../../wailsjs/go/main/App'
 import { marked } from 'marked'
 
+const { t: i18n, locale } = useI18n()
 const dialog = useDialog()
 const notify = useNotification()
 const version = ref('')
 const checking = ref(false)
 const info = ref({ os: '', build: '', cpu: '', ram: '', ipv4: '', ipv6: '' })
 const proxyInfo = ref('')
+const currentLang = ref(localStorage.getItem('optiwin_lang') || 'zh')
+const langOptions = computed(() => [
+  { label: i18n('lang.zh'), value: 'zh' },
+  { label: i18n('lang.en'), value: 'en' },
+])
 let checkedAuto = false
+
+function switchLang(lang: string) {
+  currentLang.value = lang
+  locale.value = lang
+  localStorage.setItem('optiwin_lang', lang)
+}
 
 onMounted(async () => {
   version.value = await GetCurrentVersion()
@@ -31,28 +44,28 @@ onMounted(async () => {
 })
 
 function showUpdateDialog(r: { version: string; body: string; url: string }) {
-  const htmlBody = marked.parse(r.body || '暂无更新说明')
+  const htmlBody = marked.parse(r.body || i18n('home.noUpdateNotes'))
   const d = dialog.warning({
-    title: `发现新版本 ${r.version}`,
+    title: `${i18n('home.newVersion')} ${r.version}`,
     style: 'width:70vw;max-width:800px',
     content: () => h('div', { class: 'md-content', innerHTML: htmlBody }),
     action: () =>
       h('div', { style: 'display:flex;gap:8px;justify-content:flex-end;margin-top:12px' }, [
         h(NButton, { size: 'small', type: 'primary', onClick: () => {
           BrowserOpenURL(r.url); d.destroy()
-        }}, { default: () => '前往下载' }),
+        }}, { default: () => i18n('home.goToDownload') }),
         h(NButton, { size: 'small', onClick: () => {
           localStorage.setItem('optiwin_skip_version', r.version); d.destroy()
-        }}, { default: () => '不再提示' }),
+        }}, { default: () => i18n('home.dontShowAgain') }),
         h(NButton, { size: 'small', quaternary: true, onClick: () => d.destroy() },
-          { default: () => '取消' }),
+          { default: () => i18n('home.cancel') }),
       ])
   })
 }
 
 function copyText(text: string, label: string) {
   navigator.clipboard.writeText(text).then(() => {
-    notify.success({ title: '已复制', description: label, duration: 2000 })
+    notify.success({ title: i18n('home.copied'), description: label, duration: 2000 })
   })
 }
 
@@ -61,12 +74,12 @@ async function onCheckUpdate() {
   const result = await CheckUpdate()
   checking.value = false
   if (!result || result.startsWith('err:')) {
-    const msg = result && result.startsWith('err:') ? result.slice(4) : '无法连接'
-    notify.error({ title: '检查更新', description: msg, duration: 5000 })
+    const msg = result && result.startsWith('err:') ? result.slice(4) : i18n('home.cannotConnect')
+    notify.error({ title: i18n('home.checkUpdate'), description: msg, duration: 5000 })
     return
   }
   if (result === 'same') {
-    notify.success({ title: '更新检查', description: '已是最新版本', duration: 4000 })
+    notify.success({ title: i18n('home.updateCheck'), description: i18n('home.alreadyLatest'), duration: 4000 })
     return
   }
   const r = JSON.parse(result)
@@ -83,7 +96,7 @@ async function onCheckUpdate() {
       <h1>OptiWin</h1>
       <p class="version">{{ version }}</p>
       <button class="update-btn" :disabled="checking" @click="onCheckUpdate">
-        {{ checking ? '检查中...' : '检查更新' }}
+        {{ checking ? i18n('home.checking') : i18n('home.checkUpdate') }}
       </button>
     </div>
 
@@ -95,24 +108,30 @@ async function onCheckUpdate() {
           </svg><span>YouRan4/OptiWin</span>
         </a></div>
         <div class="info-card">
-          <div class="info-header">基于 meetrevision/revision-tool 二次开发</div>
+          <div class="info-header">{{ i18n('info.basedOn') }}</div>
           <a href="https://github.com/meetrevision/revision-tool" target="_blank" class="info-link">meetrevision/revision-tool</a>
         </div>
         <div class="info-card">
-          <div class="info-header">许可证</div>
+          <div class="info-header">{{ i18n('info.license') }}</div>
           <p class="license-text">
-            遵循 <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank">GNU General Public License v3.0</a>
+            {{ i18n('info.licenseDesc') }} <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank">GNU General Public License v3.0</a>
           </p>
+        </div>
+        <div class="info-card lang-card">
+          <div class="lang-row">
+            <span class="info-header" style="margin:0">{{ i18n('info.language') }}</span>
+            <n-select v-model:value="currentLang" :options="langOptions" style="width:120px" @update:value="switchLang" />
+          </div>
         </div>
       </div>
 
       <div class="bottom-right">
         <div class="setting-card">
-          <div class="setting-card-header"><span class="header-title">系统信息</span></div>
-          <div class="info-row"><span class="info-label">操作系统</span><span class="info-value">{{ info.os }}</span></div>
-          <div class="info-row"><span class="info-label">系统版本</span><span class="info-value">Build {{ info.build }}</span></div>
-          <div class="info-row"><span class="info-label">处理器</span><span class="info-value">{{ info.cpu }}</span></div>
-          <div class="info-row"><span class="info-label">内存</span><span class="info-value">{{ info.ram }}</span></div>
+          <div class="setting-card-header"><span class="header-title">{{ i18n('info.systemInfo') }}</span></div>
+          <div class="info-row"><span class="info-label">{{ i18n('info.os') }}</span><span class="info-value">{{ info.os }}</span></div>
+          <div class="info-row"><span class="info-label">{{ i18n('info.build') }}</span><span class="info-value">Build {{ info.build }}</span></div>
+          <div class="info-row"><span class="info-label">{{ i18n('info.cpu') }}</span><span class="info-value">{{ info.cpu }}</span></div>
+          <div class="info-row"><span class="info-label">{{ i18n('info.memory') }}</span><span class="info-value">{{ info.ram }}</span></div>
           <div class="info-row">
             <span class="info-label">IPv4</span>
             <span class="info-value copy-ip" @click="copyText(info.ipv4, 'IPv4')">{{ info.ipv4 }}</span>
@@ -122,7 +141,7 @@ async function onCheckUpdate() {
             <span class="info-value copy-ip" @click="copyText(info.ipv6, 'IPv6')">{{ info.ipv6 }}</span>
           </div>
           <div class="info-row">
-            <span class="info-label">代理</span>
+            <span class="info-label">{{ i18n('info.proxy') }}</span>
             <span class="info-value" style="font-size:12px">{{ proxyInfo }}</span>
           </div>
         </div>
@@ -164,6 +183,8 @@ h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
 .license-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
 .license-text a { color: var(--accent); text-decoration: none; }
 .license-text a:hover { text-decoration: underline; }
+.lang-card { padding: 12px 14px; }
+.lang-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
 .info-row {
   display: flex; align-items: center; justify-content: space-between;

@@ -1,5 +1,6 @@
 <script setup lang="ts">
-import { ref, onMounted } from 'vue'
+import { ref, onMounted, computed } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { NSwitch, NButton, NSelect, useNotification } from 'naive-ui'
 import {
   GetPauseUpdatesStatus,
@@ -17,19 +18,20 @@ import {
   UpdateKGL,
 } from '../../wailsjs/go/main/App'
 
+const { t: i18n } = useI18n()
 const notify = useNotification()
 const pauseUpdates = ref(false)
 const visibility = ref(false)
 const drivers = ref(true)
 const channel = ref('retail')
 
-const channelOptions = [
-  { label: '退出 Insider', value: 'retail' },
+const channelOptions = computed(() => [
+  { label: i18n('upd.exitInsider'), value: 'retail' },
   { label: 'Release Preview', value: 'ReleasePreview' },
-  { label: 'Beta 通道', value: 'Beta' },
-  { label: 'Dev 通道', value: 'Dev' },
-  { label: 'Canary 通道', value: 'Canary' },
-]
+  { label: i18n('upd.beta'), value: 'Beta' },
+  { label: i18n('upd.dev'), value: 'Dev' },
+  { label: i18n('upd.canary'), value: 'Canary' },
+])
 
 onMounted(async () => {
   pauseUpdates.value = await GetPauseUpdatesStatus()
@@ -40,12 +42,12 @@ onMounted(async () => {
 
 async function doCerts() {
   const msg = await UpdateCertificates()
-  notify.info({ title: '更新证书', description: msg, duration: 5000 })
+  notify.info({ title: i18n('upd.certsTitle'), description: msg, duration: 5000 })
 }
 
 async function doKGL() {
   const msg = await UpdateKGL()
-  notify.info({ title: '更新 KGL', description: msg, duration: 5000 })
+  notify.info({ title: i18n('upd.kglTitle'), description: msg, duration: 5000 })
 }
 
 async function onPauseChange(v: boolean) {
@@ -64,7 +66,7 @@ async function onDriversChange(v: boolean) {
 }
 
 async function onChannelChange(v: string) {
-  const ok = confirm('切换 Windows 更新通道需要重启生效，是否继续？')
+  const ok = confirm(i18n('upd.channelConfirm'))
   if (!ok) {
     channel.value = await GetUpdateChannel()
     return
@@ -76,27 +78,27 @@ async function onChannelChange(v: string) {
 
 <template>
   <div class="page">
-    <h2>更新</h2>
+    <h2>{{ i18n('upd.title') }}</h2>
     <div class="setting-card">
-      <div class="setting-card-header"><span class="header-title">组件更新</span><span class="header-desc">证书和知识库更新</span></div>
+      <div class="setting-card-header"><span class="header-title">{{ i18n('upd.components') }}</span><span class="header-desc">{{ i18n('upd.componentsDesc') }}</span></div>
       <div class="setting-row">
-        <div><div class="row-label">更新证书</div><div class="row-desc">从 Windows Update 拉取最新根证书</div></div>
-        <n-button size="small" @click="doCerts">更新</n-button>
+        <div><div class="row-label">{{ i18n('upd.certs') }}</div><div class="row-desc">{{ i18n('upd.certsDesc') }}</div></div>
+        <n-button size="small" @click="doCerts">{{ i18n('upd.update') }}</n-button>
       </div>
       <div class="setting-row">
-        <div><div class="row-label">更新 KGL</div><div class="row-desc">获取最新知识图谱库</div></div>
-        <n-button size="small" @click="doKGL">更新</n-button>
+        <div><div class="row-label">{{ i18n('upd.kgl') }}</div><div class="row-desc">{{ i18n('upd.kglDesc') }}</div></div>
+        <n-button size="small" @click="doKGL">{{ i18n('upd.update') }}</n-button>
       </div>
     </div>
     <div class="setting-card">
-      <div class="setting-card-header"><span class="header-title">Windows 更新</span><span class="header-desc">更新策略控制</span></div>
-      <div class="setting-row"><div><div class="row-label">暂停Windows更新</div><div class="row-desc">暂停到 2126 年</div></div><n-switch v-model:value="pauseUpdates" @update:value="onPauseChange" /></div>
-      <div class="setting-row"><div><div class="row-label">隐藏Windows更新页面</div><div class="row-desc">隐藏设置中的更新页面与更新通知</div></div><n-switch v-model:value="visibility" @update:value="onVisibilityChange" /></div>
-      <div class="setting-row"><div><div class="row-label">通过Windows更新安装驱动程序</div><div class="row-desc">允许 Windows Update 自动安装驱动程序</div></div><n-switch v-model:value="drivers" @update:value="onDriversChange" /></div>
+      <div class="setting-card-header"><span class="header-title">{{ i18n('upd.windowsUpdate') }}</span><span class="header-desc">{{ i18n('upd.windowsUpdateDesc') }}</span></div>
+      <div class="setting-row"><div><div class="row-label">{{ i18n('upd.pause') }}</div><div class="row-desc">{{ i18n('upd.pauseDesc') }}</div></div><n-switch v-model:value="pauseUpdates" @update:value="onPauseChange" /></div>
+      <div class="setting-row"><div><div class="row-label">{{ i18n('upd.hidePage') }}</div><div class="row-desc">{{ i18n('upd.hidePageDesc') }}</div></div><n-switch v-model:value="visibility" @update:value="onVisibilityChange" /></div>
+      <div class="setting-row"><div><div class="row-label">{{ i18n('upd.drivers') }}</div><div class="row-desc">{{ i18n('upd.driversDesc') }}</div></div><n-switch v-model:value="drivers" @update:value="onDriversChange" /></div>
       <div v-if="!pauseUpdates" class="setting-row">
         <div>
-          <div class="row-label">更新通道</div>
-          <div class="row-desc">切换 Windows Insider 预览通道（需要微软账号已注册 Insider 计划）</div>
+          <div class="row-label">{{ i18n('upd.channel') }}</div>
+          <div class="row-desc">{{ i18n('upd.channelDesc') }}</div>
         </div>
         <n-select v-model:value="channel" :options="channelOptions" style="width:160px" @update:value="onChannelChange" />
       </div>

@@ -1,9 +1,11 @@
 //go:build windows
+
 package services
 
 import (
-	"golang.org/x/sys/windows/registry"
 	"OptiWin/utils"
+
+	"golang.org/x/sys/windows/registry"
 )
 
 func GetNotificationStatus() string {
@@ -22,16 +24,19 @@ func GetNotificationStatus() string {
 
 func SetNotificationMode(mode string) bool {
 	switch mode {
-	case "开启":
+	case "0":
+		// 删除注册表项，恢复默认通知设置
 		utils.RegDeleteValue(registry.CURRENT_USER, `Software\Policies\Microsoft\Windows\CurrentVersion\PushNotifications`, "NoToastApplicationNotification")
 		utils.RegDeleteValue(registry.CURRENT_USER, `SOFTWARE\Policies\Microsoft\Windows\Explorer`, "DisableNotificationCenter")
 		utils.RegDeleteValue(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\PushNotifications`, "ToastEnabled")
 		utils.RegDeleteValue(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows\CurrentVersion\PushNotifications`, "ToastEnabled")
-	case "仅关闭通知":
+	case "1":
+		// 关闭通知，但保留通知中心
 		utils.RegSetDWord(registry.CURRENT_USER, `Software\Policies\Microsoft\Windows\CurrentVersion\PushNotifications`, "NoToastApplicationNotification", 1)
 		utils.RegSetDWord(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\PushNotifications`, "ToastEnabled", 0)
 		utils.RegSetDWord(registry.LOCAL_MACHINE, `Software\Microsoft\Windows\CurrentVersion\PushNotifications`, "ToastEnabled", 0)
-	case "完全关闭":
+	case "2":
+		// 完全关闭通知和通知中心
 		utils.RegSetDWord(registry.CURRENT_USER, `Software\Policies\Microsoft\Windows\CurrentVersion\PushNotifications`, "NoToastApplicationNotification", 1)
 		utils.RegSetDWord(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\PushNotifications`, "ToastEnabled", 0)
 		utils.RegSetDWord(registry.LOCAL_MACHINE, `Software\Microsoft\Windows\CurrentVersion\PushNotifications`, "ToastEnabled", 0)

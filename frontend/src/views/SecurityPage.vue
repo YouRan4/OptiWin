@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
+import { useI18n } from 'vue-i18n'
 import { NSwitch, NSpin, useNotification } from 'naive-ui'
 import {
   GetDefenderStatus, EnableDefender, DisableDefender,
@@ -8,6 +9,7 @@ import {
   GetMemoryIntegrityStatus, EnableMemoryIntegrity, DisableMemoryIntegrity,
 } from '../../wailsjs/go/main/App'
 
+const { t: i18n } = useI18n()
 const notify = useNotification()
 
 const defender = ref(false)
@@ -28,7 +30,7 @@ async function onDefender(v: boolean) {
   if (v) await EnableDefender(); else await DisableDefender()
   defender.value = await GetDefenderStatus()
   defenderLoading.value = false
-  notify.success({ title: '安全中心', description: '需要重启系统才能完全生效', duration: 6000 })
+  notify.success({ title: i18n('sec.notifyTitle'), description: i18n('sec.restartRequired'), duration: 6000 })
 }
 
 async function onUac(v: boolean) {
@@ -51,20 +53,20 @@ async function onMemIntegrity(v: boolean) {
   <div class="page">
     <div class="defender-section" style="position:relative">
       <n-spin :show="defenderLoading">
-        <template #description>正在操作安全中心...</template>
+        <template #description>{{ i18n('sec.defenderOperating') }}</template>
         <div class="loading-overlay" v-if="defenderLoading"></div>
       </n-spin>
-      <h2>安全</h2>
+      <h2>{{ i18n('sec.title') }}</h2>
       <div class="setting-card">
-        <div class="setting-card-header"><span class="header-title">安全中心</span><span class="header-desc">Windows 安全中心完全启用或禁用</span></div>
-        <div class="setting-row"><div><div class="row-label">Windows 安全中心</div><div class="row-desc">完全开启或关闭 Defender + 安全中心服务</div></div><n-switch :value="defender" :disabled="defenderLoading" @update:value="onDefender" /></div>
+        <div class="setting-card-header"><span class="header-title">{{ i18n('sec.defenderTitle') }}</span><span class="header-desc">{{ i18n('sec.defenderDesc') }}</span></div>
+        <div class="setting-row"><div><div class="row-label">{{ i18n('sec.defenderLabel') }}</div><div class="row-desc">{{ i18n('sec.defenderRowDesc') }}</div></div><n-switch :value="defender" :disabled="defenderLoading" @update:value="onDefender" /></div>
       </div>
     </div>
     <div class="setting-card">
-      <div class="setting-card-header"><span class="header-title">系统防护</span><span class="header-desc">UAC、VBS、内存完整性设置</span></div>
-      <div class="setting-row"><div><div class="row-label">UAC</div><div class="row-desc">用户帐户控制，限制应用对系统更改的权限</div></div><n-switch v-model:value="uac" @update:value="onUac" /></div>
-      <div class="setting-row"><div><div class="row-label">VBS</div><div class="row-desc">基于虚拟化的安全，使用硬件虚拟化增强系统安全</div></div><n-switch v-model:value="vbs" @update:value="onVbs" /></div>
-      <div class="setting-row"><div><div class="row-label">内存完整性</div><div class="row-desc">核心隔离功能，防止恶意代码注入高安全性进程</div></div><n-switch v-model:value="memIntegrity" @update:value="onMemIntegrity" /></div>
+      <div class="setting-card-header"><span class="header-title">{{ i18n('sec.systemProtection') }}</span><span class="header-desc">{{ i18n('sec.systemProtectionDesc') }}</span></div>
+      <div class="setting-row"><div><div class="row-label">{{ i18n('sec.uac') }}</div><div class="row-desc">{{ i18n('sec.uacDesc') }}</div></div><n-switch v-model:value="uac" @update:value="onUac" /></div>
+      <div class="setting-row"><div><div class="row-label">{{ i18n('sec.vbs') }}</div><div class="row-desc">{{ i18n('sec.vbsDesc') }}</div></div><n-switch v-model:value="vbs" @update:value="onVbs" /></div>
+      <div class="setting-row"><div><div class="row-label">{{ i18n('sec.memIntegrity') }}</div><div class="row-desc">{{ i18n('sec.memIntegrityDesc') }}</div></div><n-switch v-model:value="memIntegrity" @update:value="onMemIntegrity" /></div>
     </div>
   </div>
 </template>
