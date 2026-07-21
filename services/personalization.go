@@ -8,35 +8,36 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
+// GetNotificationStatus 返回当前通知模式
+// 返回值: "0"=开启, "1"=仅关闭通知, "2"=完全关闭
 func GetNotificationStatus() string {
-	toast, _ := utils.RegReadDWord(registry.CURRENT_USER,
+	toast, toastErr := utils.RegReadDWord(registry.CURRENT_USER,
 		`Software\Microsoft\Windows\CurrentVersion\PushNotifications`, "ToastEnabled")
-	center, _ := utils.RegReadDWord(registry.CURRENT_USER,
+	center, centerErr := utils.RegReadDWord(registry.CURRENT_USER,
 		`SOFTWARE\Policies\Microsoft\Windows\Explorer`, "DisableNotificationCenter")
-	if center == 1 {
-		return "完全关闭"
+	if centerErr == nil && center == 1 {
+		return "2"
 	}
-	if toast == 0 {
-		return "仅关闭通知"
+	if toastErr == nil && toast == 0 {
+		return "1"
 	}
-	return "开启"
+	return "0"
 }
 
+// SetNotificationMode 设置通知模式
+// mode: "0"=开启, "1"=仅关闭通知, "2"=完全关闭
 func SetNotificationMode(mode string) bool {
 	switch mode {
 	case "0":
-		// 删除注册表项，恢复默认通知设置
 		utils.RegDeleteValue(registry.CURRENT_USER, `Software\Policies\Microsoft\Windows\CurrentVersion\PushNotifications`, "NoToastApplicationNotification")
 		utils.RegDeleteValue(registry.CURRENT_USER, `SOFTWARE\Policies\Microsoft\Windows\Explorer`, "DisableNotificationCenter")
-		utils.RegDeleteValue(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\PushNotifications`, "ToastEnabled")
-		utils.RegDeleteValue(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows\CurrentVersion\PushNotifications`, "ToastEnabled")
+		utils.RegSetDWord(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\PushNotifications`, "ToastEnabled", 1)
+		utils.RegSetDWord(registry.LOCAL_MACHINE, `Software\Microsoft\Windows\CurrentVersion\PushNotifications`, "ToastEnabled", 1)
 	case "1":
-		// 关闭通知，但保留通知中心
 		utils.RegSetDWord(registry.CURRENT_USER, `Software\Policies\Microsoft\Windows\CurrentVersion\PushNotifications`, "NoToastApplicationNotification", 1)
 		utils.RegSetDWord(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\PushNotifications`, "ToastEnabled", 0)
 		utils.RegSetDWord(registry.LOCAL_MACHINE, `Software\Microsoft\Windows\CurrentVersion\PushNotifications`, "ToastEnabled", 0)
 	case "2":
-		// 完全关闭通知和通知中心
 		utils.RegSetDWord(registry.CURRENT_USER, `Software\Policies\Microsoft\Windows\CurrentVersion\PushNotifications`, "NoToastApplicationNotification", 1)
 		utils.RegSetDWord(registry.CURRENT_USER, `Software\Microsoft\Windows\CurrentVersion\PushNotifications`, "ToastEnabled", 0)
 		utils.RegSetDWord(registry.LOCAL_MACHINE, `Software\Microsoft\Windows\CurrentVersion\PushNotifications`, "ToastEnabled", 0)

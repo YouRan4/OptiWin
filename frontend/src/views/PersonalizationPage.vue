@@ -16,7 +16,7 @@ import {
 
 const { t: i18n } = useI18n()
 
-const notif = ref('开启')
+const notif = ref('0')
 const legacyBalloons = ref(false)
 const edgeSwipe = ref(true)
 const newMenu = ref(true)

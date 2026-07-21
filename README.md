@@ -4,13 +4,19 @@
   <img src="frontend/src/assets/logo.png" width="128" height="128" alt="OptiWin Logo">
 </p>
 
+<p align="center" style="font-size:14px;color:rgba(255,255,255,0.4)">
+  🌐 <a href="README_EN.md">English</a> | 中文
+</p>
+
 <p align="center">
   适用于 Windows 系统的个性化调整工具箱
 </p>
 
 ## 截图
 
-![Screenshot](docs/screenshot.png)
+![主页](docs/主页.png)
+![性能](docs/性能.png)
+![安全](docs/安全.png)
 
 ## 功能
 
