@@ -127,8 +127,7 @@ async function onCheckUpdate() {
       </div>
 
       <div class="bottom-right">
-        <div class="system-info-card">
-           <div class="system-info-header"><span>{{ i18n('info.systemInfo') }}</span></div>
+        <div>
           <div class="info-row"><span class="info-label">{{ i18n('info.os') }}</span><span class="info-value">{{ info.os }}</span></div>
           <div class="info-row"><span class="info-label">{{ i18n('info.build') }}</span><span class="info-value">Build {{ info.build }}</span></div>
           <div class="info-row"><span class="info-label">{{ i18n('info.cpu') }}</span><span class="info-value">{{ info.cpu }}</span></div>
@@ -187,10 +186,6 @@ h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
 .lang-card { padding: 12px 14px; }
 .lang-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
-.system-info-card {
-  background: var(--card-bg); border: 1px solid var(--border);
-  border-radius: 8px; margin-bottom: 12px; overflow: hidden;
-}
 
 .system-info-header {
   padding: 10px 5px 12px;
@@ -207,10 +202,12 @@ h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
 
 .info-row {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 8px 20px;
+  padding: 12px 20px;
   background: var(--section-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
 }
-.info-row + .info-row { border-top: 1px solid var(--border); }
 .info-label { font-size: 13px; color: var(--text2); white-space: nowrap; }
 .info-value { font-size: 14px; text-align: right; word-break: break-all; max-width: 70%; }
 .copy-ip { cursor: pointer; }

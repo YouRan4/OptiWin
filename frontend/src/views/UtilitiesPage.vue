@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NSwitch, NButton, NModal } from 'naive-ui'
+import { Moon, Zap, Image, Globe, Download } from 'lucide-vue-next'
 import {
   GetHibernateStatus, EnableHibernate, DisableHibernate,
   GetFastStartupStatus, EnableFastStartup, DisableFastStartup,
@@ -86,17 +87,28 @@ async function confirmBoot() {
   <div class="page">
     <div class="setting-card">
       <div class="setting-card-header setting-card-header--flat"><span class="header-title">{{ i18n('util.powerManagement') }}</span></div>
-      <div class="setting-row"><div><div class="row-label">{{ i18n('util.hibernate') }}</div><div class="row-desc">{{ i18n('util.hibernateDesc') }}</div></div><n-switch v-model:value="hibernate" @update:value="onHibernate" /></div>
-      <div class="setting-row"><div><div class="row-label">{{ i18n('util.fastStartup') }}</div><div class="row-desc">{{ i18n('util.fastStartupDesc') }}</div></div><n-switch v-model:value="fastStartup" @update:value="onFastStartup" /></div>
+      <div class="setting-row">
+        <Moon :size="18" class="row-icon" />
+        <div><div class="row-label">{{ i18n('util.hibernate') }}</div><div class="row-desc">{{ i18n('util.hibernateDesc') }}</div></div><n-switch v-model:value="hibernate" @update:value="onHibernate" />
+      </div>
+      <div class="setting-row">
+        <Zap :size="18" class="row-icon" />
+        <div><div class="row-label">{{ i18n('util.fastStartup') }}</div><div class="row-desc">{{ i18n('util.fastStartupDesc') }}</div></div><n-switch v-model:value="fastStartup" @update:value="onFastStartup" />
+      </div>
     </div>
     <div class="setting-card">
       <div class="setting-card-header setting-card-header--flat"><span class="header-title">{{ i18n('util.apps') }}</span></div>
-      <div class="setting-row"><div><div class="row-label">{{ i18n('util.photoViewer') }}</div><div class="row-desc">{{ i18n('util.photoViewerDesc') }}</div></div><n-switch v-model:value="photoViewer" @update:value="onPhotoViewer" /></div>
       <div class="setting-row">
+        <Image :size="18" class="row-icon" />
+        <div><div class="row-label">{{ i18n('util.photoViewer') }}</div><div class="row-desc">{{ i18n('util.photoViewerDesc') }}</div></div><n-switch v-model:value="photoViewer" @update:value="onPhotoViewer" />
+      </div>
+      <div class="setting-row">
+        <Globe :size="18" class="row-icon" />
         <div><div class="row-label">{{ i18n('util.edgeLabel') }}</div><div class="row-desc">{{ i18n('util.edgeDesc') }}</div></div>
         <n-button size="small" @click="onUninstallEdge">{{ i18n('util.uninstall') }}</n-button>
       </div>
       <div class="setting-row">
+        <Download :size="18" class="row-icon" />
         <div><div class="row-label">WebView2</div><div class="row-desc">{{ i18n('util.currentVersion') }} {{ webviewVer }}</div></div>
         <n-button size="small" @click="onInstallWebView2">{{ i18n('util.install') }}</n-button>
       </div>

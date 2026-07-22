@@ -30,6 +30,10 @@ export function DisableFullscreenOptimization() {
   return window['go']['main']['App']['DisableFullscreenOptimization']();
 }
 
+export function DisableGameBar() {
+  return window['go']['main']['App']['DisableGameBar']();
+}
+
 export function DisableHibernate() {
   return window['go']['main']['App']['DisableHibernate']();
 }
@@ -92,6 +96,10 @@ export function EnableFastStartup() {
 
 export function EnableFullscreenOptimization() {
   return window['go']['main']['App']['EnableFullscreenOptimization']();
+}
+
+export function EnableGameBar() {
+  return window['go']['main']['App']['EnableGameBar']();
 }
 
 export function EnableHibernate() {
@@ -174,6 +182,10 @@ export function GetFullscreenOptimizationStatus() {
   return window['go']['main']['App']['GetFullscreenOptimizationStatus']();
 }
 
+export function GetGameBarStatus() {
+  return window['go']['main']['App']['GetGameBarStatus']();
+}
+
 export function GetHibernateStatus() {
   return window['go']['main']['App']['GetHibernateStatus']();
 }
@@ -200,6 +212,10 @@ export function GetNewContextMenuStatus() {
 
 export function GetNotificationStatus() {
   return window['go']['main']['App']['GetNotificationStatus']();
+}
+
+export function GetOldTaskManagerStatus() {
+  return window['go']['main']['App']['GetOldTaskManagerStatus']();
 }
 
 export function GetPauseUpdatesStatus() {
@@ -312,6 +328,10 @@ export function SetNewContextMenu(arg1) {
 
 export function SetNotificationMode(arg1) {
   return window['go']['main']['App']['SetNotificationMode'](arg1);
+}
+
+export function SetOldTaskManager(arg1) {
+  return window['go']['main']['App']['SetOldTaskManager'](arg1);
 }
 
 export function SetRemoveShield(arg1) {

@@ -39,6 +39,9 @@ func GetMemoryCompressionStatus() bool        { return true }
 func EnableMemoryCompression() bool           { return false }
 func DisableMemoryCompression() bool          { return false }
 func ClearShaderCache() string                { return "仅支持 Windows" }
+func GetGameBarStatus() bool                  { return false }
+func EnableGameBar() bool                     { return false }
+func DisableGameBar() bool                    { return false }
 
 func GetSecurityHealthServiceStatus() bool    { return true }
 func RestoreDefender() bool                   { return false }
@@ -71,6 +74,8 @@ func GetRemoveShortcutTextStatus() bool       { return false }
 func SetRemoveShortcutText(on bool) bool      { return false }
 func GetRemoveShieldStatus() bool             { return false }
 func SetRemoveShield(on bool) bool            { return false }
+func GetOldTaskManagerStatus() bool           { return false }
+func SetOldTaskManager(enable bool) bool      { return false }
 
 func GetHibernateStatus() bool                { return false }
 func EnableHibernate() bool                   { return false }

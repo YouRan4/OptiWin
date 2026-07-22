@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NSelect, NSwitch } from 'naive-ui'
+import { Bell, MessageCircle, Hand, List, Home, Image, ArrowUpRight, Type, ShieldOff, Activity } from 'lucide-vue-next'
 import {
   GetNotificationStatus, SetNotificationMode,
   GetLegacyBalloonStatus, SetLegacyBalloon,
@@ -12,6 +13,7 @@ import {
   GetRemoveShortcutArrowStatus, SetRemoveShortcutArrow,
   GetRemoveShortcutTextStatus, SetRemoveShortcutText,
   GetRemoveShieldStatus, SetRemoveShield,
+  GetOldTaskManagerStatus, SetOldTaskManager,
 } from '../../wailsjs/go/main/App'
 
 const { t: i18n } = useI18n()
@@ -25,6 +27,7 @@ const explorerGallery = ref(true)
 const removeArrow = ref(false)
 const removeText = ref(false)
 const removeShield = ref(false)
+const win11TaskManager = ref(true)
 
 onMounted(async () => {
   notif.value = await GetNotificationStatus()
@@ -36,6 +39,7 @@ onMounted(async () => {
   removeArrow.value = await GetRemoveShortcutArrowStatus()
   removeText.value = await GetRemoveShortcutTextStatus()
   removeShield.value = await GetRemoveShieldStatus()
+  win11TaskManager.value = await GetOldTaskManagerStatus()
 })
 
 const notifOptions = computed(() => [
@@ -88,6 +92,11 @@ async function onRemoveShield(v: boolean) {
   await SetRemoveShield(v)
   removeShield.value = await GetRemoveShieldStatus()
 }
+
+async function onWin11TaskManager(v: boolean) {
+  await SetOldTaskManager(v)
+  win11TaskManager.value = await GetOldTaskManagerStatus()
+}
 </script>
 
 <template>
@@ -95,20 +104,49 @@ async function onRemoveShield(v: boolean) {
     <div class="setting-card">
       <div class="setting-card-header setting-card-header--flat"><span class="header-title">{{ i18n('pers.desktop') }}</span></div>
       <div class="setting-row">
+        <Bell :size="18" class="row-icon" />
         <div><div class="row-label">{{ i18n('pers.notification') }}</div><div class="row-desc">{{ i18n('pers.notificationDesc') }}</div></div>
         <n-select v-model:value="notif" :options="notifOptions" style="width:140px" @update:value="onNotifChange" />
       </div>
-      <div class="setting-row"><div><div class="row-label">{{ i18n('pers.legacyBalloon') }}</div><div class="row-desc">{{ i18n('pers.legacyBalloonDesc') }}</div></div><n-switch v-model:value="legacyBalloons" @update:value="onLegacyBalloon" /></div>
-      <div class="setting-row"><div><div class="row-label">{{ i18n('pers.edgeSwipe') }}</div><div class="row-desc">{{ i18n('pers.edgeSwipeDesc') }}</div></div><n-switch v-model:value="edgeSwipe" @update:value="onEdgeSwipe" /></div>
-      <div class="setting-row"><div><div class="row-label">{{ i18n('pers.contextMenu') }}</div><div class="row-desc">{{ i18n('pers.contextMenuDesc') }}</div></div><n-switch v-model:value="newMenu" @update:value="onNewMenu" /></div>
-      <div class="setting-row"><div><div class="row-label">{{ i18n('pers.explorerHome') }}</div><div class="row-desc">{{ i18n('pers.explorerHomeDesc') }}</div></div><n-switch v-model:value="explorerHome" @update:value="onExplorerHome" /></div>
-      <div class="setting-row"><div><div class="row-label">{{ i18n('pers.explorerGallery') }}</div><div class="row-desc">{{ i18n('pers.explorerGalleryDesc') }}</div></div><n-switch v-model:value="explorerGallery" @update:value="onExplorerGallery" /></div>
+      <div class="setting-row">
+        <MessageCircle :size="18" class="row-icon" />
+        <div><div class="row-label">{{ i18n('pers.legacyBalloon') }}</div><div class="row-desc">{{ i18n('pers.legacyBalloonDesc') }}</div></div><n-switch v-model:value="legacyBalloons" @update:value="onLegacyBalloon" />
+      </div>
+      <div class="setting-row">
+        <Hand :size="18" class="row-icon" />
+        <div><div class="row-label">{{ i18n('pers.edgeSwipe') }}</div><div class="row-desc">{{ i18n('pers.edgeSwipeDesc') }}</div></div><n-switch v-model:value="edgeSwipe" @update:value="onEdgeSwipe" />
+      </div>
+      <div class="setting-row">
+        <List :size="18" class="row-icon" />
+        <div><div class="row-label">{{ i18n('pers.contextMenu') }}</div><div class="row-desc">{{ i18n('pers.contextMenuDesc') }}</div></div><n-switch v-model:value="newMenu" @update:value="onNewMenu" />
+      </div>
+      <div class="setting-row">
+        <Activity :size="18" class="row-icon" />
+        <div><div class="row-label">{{ i18n('pers.win11TaskManager') }}</div><div class="row-desc">{{ i18n('pers.win11TaskManagerDesc') }}</div></div><n-switch v-model:value="win11TaskManager" @update:value="onWin11TaskManager" />
+      </div>
+      <div class="setting-row">
+        <Home :size="18" class="row-icon" />
+        <div><div class="row-label">{{ i18n('pers.explorerHome') }}</div><div class="row-desc">{{ i18n('pers.explorerHomeDesc') }}</div></div><n-switch v-model:value="explorerHome" @update:value="onExplorerHome" />
+      </div>
+      <div class="setting-row">
+        <Image :size="18" class="row-icon" />
+        <div><div class="row-label">{{ i18n('pers.explorerGallery') }}</div><div class="row-desc">{{ i18n('pers.explorerGalleryDesc') }}</div></div><n-switch v-model:value="explorerGallery" @update:value="onExplorerGallery" />
+      </div>
     </div>
     <div class="setting-card">
       <div class="setting-card-header setting-card-header--flat"><span class="header-title">{{ i18n('pers.appearance') }}</span></div>
-      <div class="setting-row"><div><div class="row-label">{{ i18n('pers.removeArrow') }}</div><div class="row-desc">{{ i18n('pers.removeArrowDesc') }}</div></div><n-switch v-model:value="removeArrow" @update:value="onRemoveArrow" /></div>
-      <div class="setting-row"><div><div class="row-label">{{ i18n('pers.removeText') }}</div><div class="row-desc">{{ i18n('pers.removeTextDesc') }}</div></div><n-switch v-model:value="removeText" @update:value="onRemoveText" /></div>
-      <div class="setting-row"><div><div class="row-label">{{ i18n('pers.removeShield') }}</div><div class="row-desc">{{ i18n('pers.removeShieldDesc') }}</div></div><n-switch v-model:value="removeShield" @update:value="onRemoveShield" /></div>
+      <div class="setting-row">
+        <ArrowUpRight :size="18" class="row-icon" />
+        <div><div class="row-label">{{ i18n('pers.removeArrow') }}</div><div class="row-desc">{{ i18n('pers.removeArrowDesc') }}</div></div><n-switch v-model:value="removeArrow" @update:value="onRemoveArrow" />
+      </div>
+      <div class="setting-row">
+        <Type :size="18" class="row-icon" />
+        <div><div class="row-label">{{ i18n('pers.removeText') }}</div><div class="row-desc">{{ i18n('pers.removeTextDesc') }}</div></div><n-switch v-model:value="removeText" @update:value="onRemoveText" />
+      </div>
+      <div class="setting-row">
+        <ShieldOff :size="18" class="row-icon" />
+        <div><div class="row-label">{{ i18n('pers.removeShield') }}</div><div class="row-desc">{{ i18n('pers.removeShieldDesc') }}</div></div><n-switch v-model:value="removeShield" @update:value="onRemoveShield" />
+      </div>
     </div>
   </div>
 </template>

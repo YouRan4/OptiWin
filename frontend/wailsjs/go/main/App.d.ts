@@ -15,6 +15,8 @@ export function DisableFastStartup():Promise<boolean>;
 
 export function DisableFullscreenOptimization():Promise<boolean>;
 
+export function DisableGameBar():Promise<boolean>;
+
 export function DisableHibernate():Promise<boolean>;
 
 export function DisableMemoryCompression():Promise<boolean>;
@@ -46,6 +48,8 @@ export function EnableDriverUpdates():Promise<boolean>;
 export function EnableFastStartup():Promise<boolean>;
 
 export function EnableFullscreenOptimization():Promise<boolean>;
+
+export function EnableGameBar():Promise<boolean>;
 
 export function EnableHibernate():Promise<boolean>;
 
@@ -87,6 +91,8 @@ export function GetFastStartupStatus():Promise<boolean>;
 
 export function GetFullscreenOptimizationStatus():Promise<boolean>;
 
+export function GetGameBarStatus():Promise<boolean>;
+
 export function GetHibernateStatus():Promise<boolean>;
 
 export function GetLegacyBalloonStatus():Promise<boolean>;
@@ -100,6 +106,8 @@ export function GetMpoStatus():Promise<boolean>;
 export function GetNewContextMenuStatus():Promise<boolean>;
 
 export function GetNotificationStatus():Promise<string>;
+
+export function GetOldTaskManagerStatus():Promise<boolean>;
 
 export function GetPauseUpdatesStatus():Promise<boolean>;
 
@@ -156,6 +164,8 @@ export function SetLegacyBalloon(arg1:boolean):Promise<boolean>;
 export function SetNewContextMenu(arg1:boolean):Promise<boolean>;
 
 export function SetNotificationMode(arg1:string):Promise<boolean>;
+
+export function SetOldTaskManager(arg1:boolean):Promise<boolean>;
 
 export function SetRemoveShield(arg1:boolean):Promise<boolean>;
 

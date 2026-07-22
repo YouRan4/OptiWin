@@ -2,6 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NSwitch, NButton, NSelect, NModal } from 'naive-ui'
+import { FileCheck, Book, PauseCircle, EyeOff, Truck, Radio } from 'lucide-vue-next'
 import {
   GetPauseUpdatesStatus,
   EnablePauseUpdates,
@@ -91,20 +92,32 @@ async function cancelChannel() {
     <div class="setting-card">
       <div class="setting-card-header setting-card-header--flat"><span class="header-title">{{ i18n('upd.components') }}</span></div>
       <div class="setting-row">
+        <FileCheck :size="18" class="row-icon" />
         <div><div class="row-label">{{ i18n('upd.certs') }}</div><div class="row-desc">{{ i18n('upd.certsDesc') }}</div></div>
         <n-button size="small" @click="doCerts">{{ i18n('upd.update') }}</n-button>
       </div>
       <div class="setting-row">
+        <Book :size="18" class="row-icon" />
         <div><div class="row-label">{{ i18n('upd.kgl') }}</div><div class="row-desc">{{ i18n('upd.kglDesc') }}</div></div>
         <n-button size="small" @click="doKGL">{{ i18n('upd.update') }}</n-button>
       </div>
     </div>
     <div class="setting-card">
       <div class="setting-card-header setting-card-header--flat"><span class="header-title">{{ i18n('upd.windowsUpdate') }}</span></div>
-      <div class="setting-row"><div><div class="row-label">{{ i18n('upd.pause') }}</div><div class="row-desc">{{ i18n('upd.pauseDesc') }}</div></div><n-switch v-model:value="pauseUpdates" @update:value="onPauseChange" /></div>
-      <div class="setting-row"><div><div class="row-label">{{ i18n('upd.hidePage') }}</div><div class="row-desc">{{ i18n('upd.hidePageDesc') }}</div></div><n-switch v-model:value="visibility" @update:value="onVisibilityChange" /></div>
-      <div class="setting-row"><div><div class="row-label">{{ i18n('upd.drivers') }}</div><div class="row-desc">{{ i18n('upd.driversDesc') }}</div></div><n-switch v-model:value="drivers" @update:value="onDriversChange" /></div>
+      <div class="setting-row">
+        <PauseCircle :size="18" class="row-icon" />
+        <div><div class="row-label">{{ i18n('upd.pause') }}</div><div class="row-desc">{{ i18n('upd.pauseDesc') }}</div></div><n-switch v-model:value="pauseUpdates" @update:value="onPauseChange" />
+      </div>
+      <div class="setting-row">
+        <EyeOff :size="18" class="row-icon" />
+        <div><div class="row-label">{{ i18n('upd.hidePage') }}</div><div class="row-desc">{{ i18n('upd.hidePageDesc') }}</div></div><n-switch v-model:value="visibility" @update:value="onVisibilityChange" />
+      </div>
+      <div class="setting-row">
+        <Truck :size="18" class="row-icon" />
+        <div><div class="row-label">{{ i18n('upd.drivers') }}</div><div class="row-desc">{{ i18n('upd.driversDesc') }}</div></div><n-switch v-model:value="drivers" @update:value="onDriversChange" />
+      </div>
       <div v-if="!pauseUpdates" class="setting-row">
+        <Radio :size="18" class="row-icon" />
         <div>
           <div class="row-label">{{ i18n('upd.channel') }}</div>
           <div class="row-desc">{{ i18n('upd.channelDesc') }}</div>

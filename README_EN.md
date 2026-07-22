@@ -15,15 +15,18 @@
 ## Screenshot
 
 ![home](docs/home.png)
-![preformance](docs/preformance.png)
 ![security](docs/security.png)
+![preformance](docs/preformance.png)
+![personalization](docs/personalization.png)
+![utilities](docs/utilities.png)
+![updates](docs/updates.png)
 
 ## Features
 
 - **Home** — Project info + System Info (OS / CPU / Memory / IP)
 - **Security** — Security Engine Disable / Service Disable / Restore / UAC / VBS / Memory Integrity
-- **Performance** — Power Plan / C-State / Superfetch / Memory Compression / Fullscreen Optimization / Windowed Optimization / MPO / Shader Cache
-- **Personalization** — Notifications / Balloon Notifications / Edge Swipe / Context Menu / Explorer Home & Gallery / Shortcut Appearance
+- **Performance** — Power Plan / C-State / Superfetch / Memory Compression / Fullscreen Optimization / Windowed Optimization / MPO / Shader Cache / Xbox Services (Game Bar)
+- **Personalization** — Notifications / Balloon Notifications / Edge Swipe / Context Menu / Explorer Home & Gallery / Shortcut Appearance / Win11 New Task Manager Toggle
 - **Utilities** — Hibernate / Fast Startup / Photo Viewer / Uninstall Edge / WebView2 / Safe Mode / Enter BIOS
 - **Updates** — Certificate Update / KGL Update / Pause Updates / Hide Update Page / Driver Update Policy / Update Channel
 
@@ -33,6 +36,7 @@
 
 - **[PowerRun](https://www.sordum.org/81912/run-as-trustedinstaller-program-v1-6/)** — Used for executing registry operations with TrustedInstaller privileges
 - **[ionuttbara/windows-defender-remover](https://github.com/ionuttbara/windows-defender-remover)** — Reference for Defender disable approach
+- **[Lucide](https://lucide.dev/)** — Open source icon library
 
 ## License
 
@@ -50,5 +54,5 @@ GOOS=windows GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64
 | Layer | Technology |
 |-------|-----------|
 | Backend | Go + Wails |
-| Frontend | Vue 3 + Naive UI |
+| Frontend | Vue 3 + Naive UI + Lucide |
 | Registry | golang.org/x/sys/windows/registry |

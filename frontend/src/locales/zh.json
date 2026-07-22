@@ -86,7 +86,7 @@
     "legacyBalloonDesc": "使用 Win7 风格通知",
     "edgeSwipe": "屏幕边缘滑动",
     "edgeSwipeDesc": "触控屏边缘手势",
-    "contextMenu": "新版上下文菜单",
+    "contextMenu": "Win11新版右键菜单",
     "contextMenuDesc": "Win11 新版菜单与旧版菜单切换",
     "explorerHome": "Explorer 主页",
     "explorerHomeDesc": "在资源管理器中显示/隐藏主页入口",
@@ -101,7 +101,9 @@
     "removeShieldDesc": "去除可执行文件图标上的 UAC 盾牌覆盖",
     "notifOn": "开启",
     "notifOff": "仅关闭通知",
-    "notifAllOff": "完全关闭"
+    "notifAllOff": "完全关闭",
+    "win11TaskManager": "Win11新版任务管理器",
+    "win11TaskManagerDesc": "启用/禁用 Win11 新版任务管理器"
   },
   "perf": {
     "restartRequired": "需要重启系统才能生效",
@@ -125,7 +127,10 @@
     "mpoDesc": "多平面覆盖技术，减少窗口化游戏的输入延迟",
     "clearShader": "清理着色器缓存",
     "clearShaderDesc": "清理 NVIDIA/AMD GPU 着色器缓存，解决画面卡顿和渲染异常",
-    "clear": "清理"
+    "clear": "清理",
+    "xboxServices": "Xbox 服务",
+    "gameBar": "Game Bar",
+    "gameBarDesc": "启用/禁用 Game Bar 服务（不影响 Xbox）"
   },
   "nav": {
     "home": "主页",

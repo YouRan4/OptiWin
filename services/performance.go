@@ -1,15 +1,17 @@
 //go:build windows
+
 package services
 
 import (
+	"OptiWin/utils"
 	"fmt"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"unsafe"
+
 	"golang.org/x/sys/windows/registry"
-	"OptiWin/utils"
 )
 
 func GetUltimatePerformanceStatus() bool {
@@ -236,4 +238,39 @@ func ClearShaderCache() string {
 		}
 	}
 	return fmt.Sprintf("已清理 %d 个着色器缓存文件", total)
+}
+
+// --- Game Bar ---
+
+func GetGameBarStatus() bool {
+	v1, err1 := utils.RegReadDWord(registry.CURRENT_USER,
+		`Software\Microsoft\Windows\CurrentVersion\GameDVR`, "AppCaptureEnabled")
+	v2, err2 := utils.RegReadDWord(registry.CURRENT_USER,
+		`System\GameConfigStore`, "GameDVR_Enabled")
+
+	if (err1 == nil && v1 != 0) || (err2 == nil && v2 != 0) {
+		return true
+	}
+	if (err1 == nil && v1 == 0) && (err2 == nil && v2 == 0) {
+		return false
+	}
+	return true
+}
+
+func EnableGameBar() bool {
+	utils.RegSetDWordBool(registry.CURRENT_USER,
+		`Software\Microsoft\Windows\CurrentVersion\GameDVR`, "AppCaptureEnabled", 1)
+	utils.RegSetDWordBool(registry.CURRENT_USER,
+		`System\GameConfigStore`, "GameDVR_Enabled", 1)
+	utils.RestartExplorer()
+	return true
+}
+
+func DisableGameBar() bool {
+	utils.RegSetDWordBool(registry.CURRENT_USER,
+		`Software\Microsoft\Windows\CurrentVersion\GameDVR`, "AppCaptureEnabled", 0)
+	utils.RegSetDWordBool(registry.CURRENT_USER,
+		`System\GameConfigStore`, "GameDVR_Enabled", 0)
+	utils.RestartExplorer()
+	return true
 }

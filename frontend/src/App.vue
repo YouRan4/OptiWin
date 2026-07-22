@@ -3,6 +3,17 @@ import { useRouter, useRoute } from 'vue-router'
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NConfigProvider, darkTheme, zhCN, dateZhCN, enUS, dateEnUS, NNotificationProvider, NDialogProvider } from 'naive-ui'
+import { Home, Shield, Zap, Palette, Wrench, Download } from 'lucide-vue-next'
+
+const iconMap: Record<string, any> = {
+  home: Home,
+  security: Shield,
+  performance: Zap,
+  personalization: Palette,
+  utilities: Wrench,
+  updates: Download,
+}
+
 const router = useRouter()
 const route = useRoute()
 const { t: i18n, locale } = useI18n()
@@ -65,12 +76,18 @@ function reExplorer() {
     <div class="shell">
       <header class="titlebar">
         <div class="t-left" style="--wails-draggable: drag">
+          <img src="./assets/logo.png" class="t-logo" />
           <span class="t-title">OptiWin</span>
         </div>
-        <nav class="t-nav">
+        <nav class="t-nav" style="--wails-draggable: drag">
+          <div style="--wails-draggable: no-drag; display: flex; gap: 4px;">
           <button v-for="item in navItems" :key="item.name"
             class="nav-btn" :class="{ active: activeName === item.name }"
-            @click="navigate(item.path)">{{ item.label }}</button>
+            @click="navigate(item.path)">
+            <component :is="iconMap[item.name]" :size="16" />
+            <span>{{ item.label }}</span>
+          </button>
+          </div>
         </nav>
         <div class="t-right" style="--wails-draggable: no-drag">
           <button class="tb-btn" @click="reExplorer" :title="i18n('nav.restartExplorer')">&#x21BB;</button>
@@ -121,7 +138,7 @@ function reExplorer() {
 }
 
 body, #app {
-  font-family: 'Segoe UI', system-ui, sans-serif;
+  font-family: 'Segoe UI Variable Display', 'Segoe UI', system-ui, sans-serif;
   height: 100vh; overflow: hidden;
   color: var(--text); background: transparent;
 }
@@ -138,15 +155,16 @@ a:hover { text-decoration: underline; }
   box-shadow: 0 1px 8px rgba(0,0,0,0.15);
   gap: 24px; z-index: 10;
 }
-.t-left { display: flex; align-items: center; }
+.t-left { display: flex; align-items: center; gap: 8px; }
+.t-logo { width: 24px; height: 24px; object-fit: contain; }
 .t-title { font-size: 15px; font-weight: 600; }
 
 /* 导航按钮 */
 .t-nav { display: flex; align-items: center; gap: 4px; flex: 1; overflow-x: auto; }
 .nav-btn {
   background: none; border: none; cursor: pointer; color: var(--text);
-  font-size: 14px; padding: 0 16px; height: 48px; white-space: nowrap;
-  display: flex; align-items: center; position: relative; opacity: 0.6;
+  font-size: 14px; padding: 0 14px; height: 48px; white-space: nowrap;
+  display: flex; align-items: center; gap: 6px; position: relative; opacity: 0.6;
   border-radius: 8px;
 }
 .nav-btn:hover { opacity: 1; background: var(--hover); }
@@ -174,7 +192,7 @@ a:hover { text-decoration: underline; }
 * { margin: 0; padding: 0; box-sizing: border-box; }
 
 /* 标题 */
-h2 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+h2 { font-size: 24px; font-weight: 500; margin-bottom: 8px; }
 
 /* SettingCard 组件 */
 .setting-card {
@@ -203,26 +221,32 @@ h2 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
 .setting-card-header--flat .header-title { all: unset; }
 
 .setting-row {
-  display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 20px;
+  display: flex; align-items: center;
+  padding: 14px 25px 14px 20px;
   background: var(--section-bg);
   border: 1px solid var(--border);
   border-radius: 8px;
   margin-bottom: 8px;
+  gap: 10px;
 }
+.setting-row > *:last-child { flex-shrink: 0; }
 .setting-row .row-label { font-size: 14px; }
 .setting-row .row-desc { font-size: 12px; color: var(--text2); margin-top: 1px; }
+.setting-row > div:nth-child(2) { flex: 1; }
+.row-icon { flex-shrink: 0; color: var(--accent); margin-right: 4px; }
 
-/* 页面过渡动画 */
-.page-enter-active, .page-leave-active { transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
-.page-enter-from { opacity: 0; transform: translateY(12px); }
-.page-leave-to { opacity: 0; transform: translateY(-12px); }
+/* 页面过渡动画 - 水平滑动 */
+.page-enter-active, .page-leave-active { transition: opacity 0.25s ease, transform 0.25s ease; }
+.page-enter-from { opacity: 0; transform: translateX(24px); }
+.page-leave-to { opacity: 0; transform: translateX(-24px); }
 
-/* 滚动条 */
-::-webkit-scrollbar { width: 8px; height: 8px; }
+/* 滚动条 - 细条，悬停变宽 */
+::-webkit-scrollbar { width: 4px; height: 4px; }
 ::-webkit-scrollbar-track { background: transparent; }
-[data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 8px; }
+::-webkit-scrollbar-thumb { border-radius: 8px; transition: width 0.2s; }
+::-webkit-scrollbar-thumb:hover { width: 8px; height: 8px; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); }
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
-[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 8px; }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); }
 [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
 </style>

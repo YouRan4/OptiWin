@@ -145,6 +145,11 @@ func (a *App) DisableMemoryCompression() bool   { return services.DisableMemoryC
 // --- 着色器缓存 ---
 func (a *App) ClearShaderCache() string { return services.ClearShaderCache() }
 
+// --- Game Bar ---
+func (a *App) GetGameBarStatus() bool { return services.GetGameBarStatus() }
+func (a *App) EnableGameBar() bool    { return services.EnableGameBar() }
+func (a *App) DisableGameBar() bool   { return services.DisableGameBar() }
+
 // --- Defender ---
 func (a *App) GetSecurityHealthServiceStatus() bool { return services.GetSecurityHealthServiceStatus() }
 func (a *App) RestoreDefender() bool                { return services.RestoreDefender() }
@@ -194,6 +199,10 @@ func (a *App) GetRemoveShortcutTextStatus() bool   { return services.GetRemoveSh
 func (a *App) SetRemoveShortcutText(on bool) bool  { return services.SetRemoveShortcutText(on) }
 func (a *App) GetRemoveShieldStatus() bool         { return services.GetRemoveShieldStatus() }
 func (a *App) SetRemoveShield(on bool) bool        { return services.SetRemoveShield(on) }
+
+// --- 任务管理器 ---
+func (a *App) GetOldTaskManagerStatus() bool { return services.GetOldTaskManagerStatus() }
+func (a *App) SetOldTaskManager(enable bool) bool { return services.SetOldTaskManager(enable) }
 
 // --- 休眠 ---
 func (a *App) GetHibernateStatus() bool { return services.GetHibernateStatus() }

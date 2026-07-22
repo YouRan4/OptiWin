@@ -2,6 +2,7 @@
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NSwitch } from 'naive-ui'
+import { Shield, Lock, Server, HardDrive } from 'lucide-vue-next'
 import {
   GetSecurityHealthServiceStatus, RestoreDefender, DisableAllServices,
   GetUacStatus, EnableUac, DisableUac,
@@ -67,6 +68,7 @@ async function onMemIntegrity(v: boolean) {
         <span class="header-title">{{ i18n('sec.defenderTitle') }}</span>
       </div>
       <div class="setting-row">
+        <Shield :size="18" class="row-icon" />
         <div>
           <div class="row-label">{{ i18n('sec.disableAll') }}</div>
           <div class="row-desc">{{ i18n('sec.disableAllDesc') }}</div>
@@ -80,6 +82,7 @@ async function onMemIntegrity(v: boolean) {
         <span class="header-title">{{ i18n('sec.systemProtection') }}</span>
       </div>
       <div class="setting-row">
+        <Lock :size="18" class="row-icon" />
         <div>
           <div class="row-label">{{ i18n('sec.uac') }}</div>
           <div class="row-desc">{{ i18n('sec.uacDesc') }}</div>
@@ -87,6 +90,7 @@ async function onMemIntegrity(v: boolean) {
         <n-switch v-model:value="uac" @update:value="onUac" />
       </div>
       <div class="setting-row">
+        <Server :size="18" class="row-icon" />
         <div>
           <div class="row-label">{{ i18n('sec.vbs') }}</div>
           <div class="row-desc">{{ i18n('sec.vbsDesc') }}</div>
@@ -94,6 +98,7 @@ async function onMemIntegrity(v: boolean) {
         <n-switch v-model:value="vbs" @update:value="onVbs" />
       </div>
       <div class="setting-row">
+        <HardDrive :size="18" class="row-icon" />
         <div>
           <div class="row-label">{{ i18n('sec.memIntegrity') }}</div>
           <div class="row-desc">{{ i18n('sec.memIntegrityDesc') }}</div>

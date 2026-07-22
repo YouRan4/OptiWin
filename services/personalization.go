@@ -4,6 +4,9 @@ package services
 
 import (
 	"OptiWin/utils"
+	"os"
+	"os/exec"
+	"time"
 
 	"golang.org/x/sys/windows/registry"
 )
@@ -186,4 +189,42 @@ func SetRemoveShield(on bool) bool {
 	}
 	utils.RestartExplorer()
 	return true
+}
+
+const taskManagerPath = `C:\Windows\SystemResources\Windows.UI.TaskManager`
+
+func GetOldTaskManagerStatus() bool {
+	_, err := os.Stat(taskManagerPath)
+	if err == nil {
+		return true // 文件夹存在 = Win11
+	}
+	// 原路径找不到，检查 .bak 是否存在（可能权限错误）
+	_, err = os.Stat(taskManagerPath + ".bak")
+	if err == nil {
+		return false // 已重命名 = Win10
+	}
+	return true // 两边都查不到，默认 Win11
+}
+
+func SetOldTaskManager(enable bool) bool {
+	target := taskManagerPath + ".bak"
+	source := taskManagerPath
+	if enable {
+		target, source = source, target
+	}
+	cmd := exec.Command(utils.GetPowerRunPath(), "powershell.exe", "-NoProfile", "-NonInteractive", "-Command",
+		`Rename-Item -Path "`+source+`" -NewName "`+target+`" -Force`)
+	utils.HideWindow(cmd)
+	if cmd.Run() != nil {
+		return false
+	}
+	// 等待文件系统变更生效
+	for i := 0; i < 10; i++ {
+		time.Sleep(300 * time.Millisecond)
+		_, err := os.Stat(source)
+		if os.IsNotExist(err) {
+			return true // 源路径已不存在，重命名成功
+		}
+	}
+	return false // 超时仍未确认
 }

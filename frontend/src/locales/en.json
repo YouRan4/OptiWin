@@ -86,7 +86,7 @@
     "legacyBalloonDesc": "Use Win7-style notifications",
     "edgeSwipe": "Edge Swipe",
     "edgeSwipeDesc": "Touch screen edge gestures",
-    "contextMenu": "New Context Menu",
+    "contextMenu": "Win11 New Right-click Menu",
     "contextMenuDesc": "Toggle between Win11 and classic context menu",
     "explorerHome": "Explorer Home",
     "explorerHomeDesc": "Show or hide Home entry in Explorer",
@@ -101,7 +101,9 @@
     "removeShieldDesc": "Remove UAC shield overlay on executable icons",
     "notifOn": "On",
     "notifOff": "Notifications Off",
-    "notifAllOff": "All Off"
+    "notifAllOff": "All Off",
+    "win11TaskManager": "Win11 New Task Manager",
+    "win11TaskManagerDesc": "Enable or disable Win11 new Task Manager"
   },
   "perf": {
     "restartRequired": "Restart required for changes to take effect",
@@ -125,7 +127,10 @@
     "mpoDesc": "Multi-Plane Overlay, reduces input latency for windowed games",
     "clearShader": "Clear Shader Cache",
     "clearShaderDesc": "Clear GPU shader cache to fix stuttering and rendering issues",
-    "clear": "Clear"
+    "clear": "Clear",
+    "xboxServices": "Xbox Services",
+    "gameBar": "Game Bar",
+    "gameBarDesc": "Enable or disable Game Bar service (does not affect Xbox)"
   },
   "nav": {
     "home": "Home",
@@ -141,7 +146,6 @@
     "license": "License",
     "licenseDesc": "Under",
     "language": "Language",
-    "systemInfo": "System Info",
     "os": "Operating System",
     "build": "Build",
     "cpu": "CPU",
