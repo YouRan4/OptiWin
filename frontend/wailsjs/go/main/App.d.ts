@@ -117,6 +117,8 @@ export function GetSecurityHealthServiceStatus():Promise<boolean>;
 
 export function GetSuperfetchStatus():Promise<boolean>;
 
+export function GetSystemAccentColor():Promise<string>;
+
 export function GetSystemInfo():Promise<string>;
 
 export function GetUacStatus():Promise<boolean>;

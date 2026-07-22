@@ -234,6 +234,10 @@ export function GetSuperfetchStatus() {
   return window['go']['main']['App']['GetSuperfetchStatus']();
 }
 
+export function GetSystemAccentColor() {
+  return window['go']['main']['App']['GetSystemAccentColor']();
+}
+
 export function GetSystemInfo() {
   return window['go']['main']['App']['GetSystemInfo']();
 }

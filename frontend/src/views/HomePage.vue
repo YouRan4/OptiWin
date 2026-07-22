@@ -1,14 +1,15 @@
 <script setup lang="ts">
 import { ref, onMounted, h, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NButton, NSelect, useDialog, useNotification } from 'naive-ui'
+import { NButton, NSelect, useDialog } from 'naive-ui'
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime'
 import { GetCurrentVersion, CheckUpdate, GetSystemInfo, GetProxyInfo } from '../../wailsjs/go/main/App'
 import { marked } from 'marked'
+import { useNotify } from '../composables/useNotify'
 
 const { t: i18n, locale } = useI18n()
 const dialog = useDialog()
-const notify = useNotification()
+const notify = useNotify()
 const version = ref('')
 const checking = ref(false)
 const info = ref({ os: '', build: '', cpu: '', ram: '', ipv4: '', ipv6: '' })
@@ -65,7 +66,7 @@ function showUpdateDialog(r: { version: string; body: string; url: string }) {
 
 function copyText(text: string, label: string) {
   navigator.clipboard.writeText(text).then(() => {
-    notify.success({ title: i18n('home.copied'), description: label, duration: 2000 })
+    notify.create({ title: i18n('home.copied'), description: label, duration: 2000 })
   })
 }
 
@@ -75,11 +76,11 @@ async function onCheckUpdate() {
   checking.value = false
   if (!result || result.startsWith('err:')) {
     const msg = result && result.startsWith('err:') ? result.slice(4) : i18n('home.cannotConnect')
-    notify.error({ title: i18n('home.checkUpdate'), description: msg, duration: 5000 })
+    notify.create({ title: i18n('home.checkUpdate'), description: msg, duration: 5000 })
     return
   }
   if (result === 'same') {
-    notify.success({ title: i18n('home.updateCheck'), description: i18n('home.alreadyLatest'), duration: 4000 })
+    notify.create({ title: i18n('home.updateCheck'), description: i18n('home.alreadyLatest'), duration: 4000 })
     return
   }
   const r = JSON.parse(result)
@@ -126,8 +127,8 @@ async function onCheckUpdate() {
       </div>
 
       <div class="bottom-right">
-        <div class="setting-card">
-          <div class="setting-card-header"><span class="header-title">{{ i18n('info.systemInfo') }}</span></div>
+        <div class="system-info-card">
+           <div class="system-info-header"><span>{{ i18n('info.systemInfo') }}</span></div>
           <div class="info-row"><span class="info-label">{{ i18n('info.os') }}</span><span class="info-value">{{ info.os }}</span></div>
           <div class="info-row"><span class="info-label">{{ i18n('info.build') }}</span><span class="info-value">Build {{ info.build }}</span></div>
           <div class="info-row"><span class="info-label">{{ i18n('info.cpu') }}</span><span class="info-value">{{ info.cpu }}</span></div>
@@ -158,9 +159,9 @@ h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
 .version { font-size: 14px; color: var(--text2); margin-bottom: 10px; }
 .update-btn {
   background: transparent; border: 1px solid var(--accent); color: var(--accent);
-  border-radius: 6px; padding: 5px 18px; font-size: 13px; cursor: pointer; font-family: inherit;
+  border-radius: 8px; padding: 5px 18px; font-size: 13px; cursor: pointer; font-family: inherit;
 }
-.update-btn:hover { background: rgba(96,205,255,0.1); }
+.update-btn:hover { background: var(--active); }
 .update-btn:disabled { opacity: 0.5; cursor: default; }
 
 .bottom-row { display: flex; gap: 24px; max-width: 900px; margin: 4px auto 0; }
@@ -168,12 +169,12 @@ h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
 .bottom-right { flex: 1; }
 
 .info-card {
-  background: var(--card-bg); border: 1px solid var(--border);
+  background: var(--section-bg); border: 1px solid var(--border);
   border-radius: 8px; padding: 14px;
 }
 .github-link {
   display: flex; align-items: center; gap: 10px;
-  font-size: 15px; font-weight: 600; color: var(--text);
+  font-size: 15px; font-weight: 600; color: var(--accent);
   text-decoration: none;
 }
 .github-link:hover { color: var(--accent); }
@@ -186,9 +187,28 @@ h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
 .lang-card { padding: 12px 14px; }
 .lang-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
+.system-info-card {
+  background: var(--card-bg); border: 1px solid var(--border);
+  border-radius: 8px; margin-bottom: 12px; overflow: hidden;
+}
+
+.system-info-header {
+  padding: 10px 5px 12px;
+  background: var(--section-bg);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: baseline; gap: 8px;
+}
+.system-info-header::before {
+  content: ''; width: 3px; height: 18px;
+  background: var(--accent); border-radius: 2px; flex-shrink: 0;
+  align-self: center;
+}
+.system-info-header span { font-size: 16px; font-weight: 600; }
+
 .info-row {
   display: flex; align-items: center; justify-content: space-between;
   padding: 8px 20px;
+  background: var(--section-bg);
 }
 .info-row + .info-row { border-top: 1px solid var(--border); }
 .info-label { font-size: 13px; color: var(--text2); white-space: nowrap; }
@@ -201,7 +221,7 @@ h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
 .md-content ul, .md-content ol { padding-left: 20px; margin: 4px 0; }
 .md-content li { margin: 2px 0; }
 .md-content code { background: rgba(255,255,255,0.1); padding: 1px 4px; border-radius: 3px; font-size: 12px; }
-.md-content pre { background: rgba(0,0,0,0.2); padding: 8px; border-radius: 6px; overflow-x: auto; }
+.md-content pre { background: rgba(0,0,0,0.2); padding: 8px; border-radius: 8px; overflow-x: auto; }
 .md-content pre code { background: none; padding: 0; }
 .md-content a { color: var(--accent); text-decoration: none; }
 .md-content a:hover { text-decoration: underline; }

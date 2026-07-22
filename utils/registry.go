@@ -3,6 +3,8 @@
 package utils
 
 import (
+	"fmt"
+
 	"golang.org/x/sys/windows/registry"
 )
 
@@ -52,4 +54,20 @@ func RegSetDWord(key registry.Key, path, name string, value uint32) {
 func RegSetDWordBool(key registry.Key, path, name string, value uint32) bool {
 	RegSetDWord(key, path, name, value)
 	return true
+}
+
+func GetSystemAccentColor() string {
+	val, err := RegReadDWord(registry.CURRENT_USER, `Software\Microsoft\Windows\DWM`, "AccentColor")
+	if err != nil {
+		return ""
+	}
+	r := byte(val)
+	g := byte(val >> 8)
+	b := byte(val >> 16)
+	// Windows 对极暗或极亮的颜色会自动调整，注册表值不准确
+	lum := float64(r)*0.299 + float64(g)*0.587 + float64(b)*0.114
+	if lum < 40 || lum > 220 {
+		return ""
+	}
+	return fmt.Sprintf("#%02X%02X%02X", r, g, b)
 }

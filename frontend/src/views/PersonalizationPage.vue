@@ -92,9 +92,8 @@ async function onRemoveShield(v: boolean) {
 
 <template>
   <div class="page">
-    <h2>{{ i18n('pers.title') }}</h2>
     <div class="setting-card">
-      <div class="setting-card-header"><span class="header-title">{{ i18n('pers.desktop') }}</span><span class="header-desc">{{ i18n('pers.desktopDesc') }}</span></div>
+      <div class="setting-card-header setting-card-header--flat"><span class="header-title">{{ i18n('pers.desktop') }}</span></div>
       <div class="setting-row">
         <div><div class="row-label">{{ i18n('pers.notification') }}</div><div class="row-desc">{{ i18n('pers.notificationDesc') }}</div></div>
         <n-select v-model:value="notif" :options="notifOptions" style="width:140px" @update:value="onNotifChange" />
@@ -106,7 +105,7 @@ async function onRemoveShield(v: boolean) {
       <div class="setting-row"><div><div class="row-label">{{ i18n('pers.explorerGallery') }}</div><div class="row-desc">{{ i18n('pers.explorerGalleryDesc') }}</div></div><n-switch v-model:value="explorerGallery" @update:value="onExplorerGallery" /></div>
     </div>
     <div class="setting-card">
-      <div class="setting-card-header"><span class="header-title">{{ i18n('pers.appearance') }}</span><span class="header-desc">{{ i18n('pers.appearanceDesc') }}</span></div>
+      <div class="setting-card-header setting-card-header--flat"><span class="header-title">{{ i18n('pers.appearance') }}</span></div>
       <div class="setting-row"><div><div class="row-label">{{ i18n('pers.removeArrow') }}</div><div class="row-desc">{{ i18n('pers.removeArrowDesc') }}</div></div><n-switch v-model:value="removeArrow" @update:value="onRemoveArrow" /></div>
       <div class="setting-row"><div><div class="row-label">{{ i18n('pers.removeText') }}</div><div class="row-desc">{{ i18n('pers.removeTextDesc') }}</div></div><n-switch v-model:value="removeText" @update:value="onRemoveText" /></div>
       <div class="setting-row"><div><div class="row-label">{{ i18n('pers.removeShield') }}</div><div class="row-desc">{{ i18n('pers.removeShieldDesc') }}</div></div><n-switch v-model:value="removeShield" @update:value="onRemoveShield" /></div>

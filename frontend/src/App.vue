@@ -3,14 +3,13 @@ import { useRouter, useRoute } from 'vue-router'
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NConfigProvider, darkTheme, zhCN, dateZhCN, enUS, dateEnUS, NNotificationProvider, NDialogProvider } from 'naive-ui'
-
 const router = useRouter()
 const route = useRoute()
 const { t: i18n, locale } = useI18n()
 
 const isDark = ref(true)
 
-onMounted(() => {
+onMounted(async () => {
   const mq = window.matchMedia('(prefers-color-scheme: dark)')
   isDark.value = mq.matches
   applyTheme(isDark.value)
@@ -18,6 +17,13 @@ onMounted(() => {
     isDark.value = e.matches
     applyTheme(e.matches)
   })
+
+  try {
+    const color = await (window as any)['go']['main']['App']['GetSystemAccentColor']()
+    if (color) {
+      document.documentElement.style.setProperty('--accent', color)
+    }
+  } catch {} // 获取失败则使用默认颜色
 })
 
 function applyTheme(dark: boolean) {
@@ -88,32 +94,30 @@ function reExplorer() {
 </template>
 
 <style>
-* { margin: 0; padding: 0; box-sizing: border-box; }
-
 /* 深色主题 */
 :root[data-theme="dark"] {
-  --accent: #60CDFF;
+  --accent: rgb(79, 82, 178);
   --spinner-color: #FFFFFF;
   --border: rgba(255,255,255,0.06);
-  --text: #E5E5E5;
-  --text2: rgba(255,255,255,0.4);
-  --hover: rgba(255,255,255,0.05);
+  --text: rgb(255, 255, 255);
+  --text2: rgb(208, 208, 208);
+  --hover: rgba(41,41,41,1);
   --active: rgba(96,205,255,0.12);
-  --card-bg: rgba(45,45,45,0.7);
-  --section-bg: rgba(55,55,55,0.5);
+  --card-bg: rgba(31, 32, 34,0.8);
+  --section-bg: rgba(42,43,44,0.8);
 }
 
 /* 浅色主题 */
 :root[data-theme="light"] {
-  --accent: #1890FF;
+  --accent: rgb(79, 82, 178);
   --spinner-color: #000000;
   --border: rgba(0,0,0,0.1);
-  --text: #1A1A1A;
-  --text2: rgba(0,0,0,0.45);
-  --hover: rgba(0,0,0,0.04);
+  --text: rgb(26, 26, 26);
+  --text2: rgb(96, 96, 96);
+  --hover: rgba(236, 237, 238.04);
   --active: rgba(24,144,255,0.1);
-  --card-bg: rgba(255,255,255,0.85);
-  --section-bg: rgba(245,245,245,0.85);
+  --card-bg: rgba(243, 243, 244,0.8);
+  --section-bg: rgba(251, 251, 252,0.8);
 }
 
 body, #app {
@@ -121,6 +125,8 @@ body, #app {
   height: 100vh; overflow: hidden;
   color: var(--text); background: transparent;
 }
+a { color: var(--accent); text-decoration: none; }
+a:hover { text-decoration: underline; }
 
 .shell { height: 100vh; display: flex; flex-direction: column; background: transparent; }
 
@@ -141,6 +147,7 @@ body, #app {
   background: none; border: none; cursor: pointer; color: var(--text);
   font-size: 14px; padding: 0 16px; height: 48px; white-space: nowrap;
   display: flex; align-items: center; position: relative; opacity: 0.6;
+  border-radius: 8px;
 }
 .nav-btn:hover { opacity: 1; background: var(--hover); }
 .nav-btn.active { opacity: 1; font-weight: 600; }
@@ -163,10 +170,15 @@ body, #app {
 .body { display: flex; flex: 1; overflow: hidden; background: transparent; }
 .content { flex: 1; overflow-y: auto; padding: 32px 40px; }
 
+/* 全局重置 */
+* { margin: 0; padding: 0; box-sizing: border-box; }
+
+/* 标题 */
 h2 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
+
+/* SettingCard 组件 */
 .setting-card {
-  background: var(--card-bg); border: 1px solid var(--border);
-  border-radius: 8px; margin-bottom: 12px; overflow: hidden;
+  margin-bottom: 12px;
 }
 .setting-card-header {
   padding: 16px 20px 12px;
@@ -180,24 +192,37 @@ h2 { font-size: 24px; font-weight: 600; margin-bottom: 4px; }
   align-self: center;
 }
 .setting-card-header .header-title { font-size: 16px; font-weight: 600; }
-.setting-card-header .header-desc { font-size: 12px; color: var(--text2); }
+
+.setting-card-header--flat {
+  padding: 14px 5px 4px;
+  background: none;
+  border-bottom: none;
+  margin-bottom: 8px;
+}
+.setting-card-header--flat::before { display: none; }
+.setting-card-header--flat .header-title { all: unset; }
 
 .setting-row {
   display: flex; align-items: center; justify-content: space-between;
-  padding: 12px 20px 12px 28px;
+  padding: 12px 20px;
+  background: var(--section-bg);
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  margin-bottom: 8px;
 }
-.setting-row + .setting-row { border-top: 1px solid var(--border); }
 .setting-row .row-label { font-size: 14px; }
 .setting-row .row-desc { font-size: 12px; color: var(--text2); margin-top: 1px; }
 
+/* 页面过渡动画 */
 .page-enter-active, .page-leave-active { transition: opacity 0.3s cubic-bezier(0.4, 0, 0.2, 1), transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); }
 .page-enter-from { opacity: 0; transform: translateY(12px); }
 .page-leave-to { opacity: 0; transform: translateY(-12px); }
 
+/* 滚动条 */
 ::-webkit-scrollbar { width: 8px; height: 8px; }
 ::-webkit-scrollbar-track { background: transparent; }
-[data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 4px; }
+[data-theme="dark"] ::-webkit-scrollbar-thumb { background: rgba(255,255,255,0.12); border-radius: 8px; }
 [data-theme="dark"] ::-webkit-scrollbar-thumb:hover { background: rgba(255,255,255,0.2); }
-[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 4px; }
+[data-theme="light"] ::-webkit-scrollbar-thumb { background: rgba(0,0,0,0.12); border-radius: 8px; }
 [data-theme="light"] ::-webkit-scrollbar-thumb:hover { background: rgba(0,0,0,0.2); }
 </style>

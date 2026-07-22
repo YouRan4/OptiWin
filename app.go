@@ -220,6 +220,11 @@ func (a *App) SetSafeBoot(mode string) bool { return services.SetSafeBoot(mode) 
 func (a *App) RebootSystem() bool           { return services.RebootSystem() }
 func (a *App) RebootToBios() bool           { return services.RebootToBios() }
 
+// --- 系统主题色 ---
+func (a *App) GetSystemAccentColor() string {
+	return utils.GetSystemAccentColor()
+}
+
 // --- 重启资源管理器 ---
 func (a *App) RestartExplorer() string {
 	cmd := exec.Command("taskkill", "/f", "/im", "explorer.exe")

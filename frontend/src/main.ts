@@ -4,6 +4,7 @@ import App from './App.vue'
 import router from './router'
 import zh from './locales/zh.json'
 import en from './locales/en.json'
+import './styles/overrides.css'
 
 const saved = localStorage.getItem('optiwin_lang')
 const systemLang = (navigator.language || '').startsWith('zh') ? 'zh' : 'en'

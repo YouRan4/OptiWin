@@ -1,0 +1,49 @@
+/* ===== n-switch ===== */
+/* 开关打开时的轨道颜色 */
+.n-switch.n-switch--active .n-switch__rail {
+  background: var(--accent);
+}
+
+/* ===== n-button ===== */
+/* hover 边框和文字颜色 */
+.n-button:not(.n-button--disabled):hover .n-button__state-border {
+  border: 1px solid var(--accent) !important;
+}
+.n-button:not(.n-button--disabled):hover {
+  color: var(--accent) !important;
+}
+/* focus（无 hover）时隐藏边框 */
+.n-button:not(.n-button--disabled):focus:not(:hover),
+.n-button:not(.n-button--disabled):focus:not(:hover) .n-button__state-border {
+  color: var(--n-text-color) !important;
+  border: 1px solid transparent !important;
+}
+/* active 时隐藏边框 */
+.n-button:not(.n-button--disabled):active,
+.n-button:not(.n-button--disabled):active .n-button__state-border {
+  color: var(--n-text-color) !important;
+  border: 1px solid transparent !important;
+}
+/* 涟漪颜色 */
+.n-button .n-base-wave { --n-ripple-color: var(--accent) !important; }
+
+/* ===== n-select ===== */
+/* 鼠标悬停/聚焦边框颜色 */
+.n-base-selection:hover .n-base-selection__state-border,
+.n-base-selection.n-base-selection--focus .n-base-selection__state-border {
+  border-color: var(--accent) !important;
+}
+/* 选中选项文字保持默认，不改变颜色 */
+.n-base-select-option--selected {
+  color: var(--text) !important;
+}/* ===== n-modal ===== */
+/* 遮罩层背景 */
+.n-modal-mask { background: rgba(0, 0, 0, 0.5); backdrop-filter: blur(4px); }
+/* 弹窗卡片背景 */
+.n-modal-container .n-card { background: var(--card-bg); }
+
+/* ===== n-notification ===== */
+/* 通知容器顶部留出标题栏位置（标题栏高 48px + 8px 间距） */
+.n-notification-container--top-right {
+  padding-top: 56px;
+}

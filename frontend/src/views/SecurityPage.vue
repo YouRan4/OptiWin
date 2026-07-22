@@ -1,7 +1,7 @@
 <script setup lang="ts">
 import { ref, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
-import { NSwitch, useNotification } from 'naive-ui'
+import { NSwitch } from 'naive-ui'
 import {
   GetSecurityHealthServiceStatus, RestoreDefender, DisableAllServices,
   GetUacStatus, EnableUac, DisableUac,
@@ -9,9 +9,10 @@ import {
   GetMemoryIntegrityStatus, EnableMemoryIntegrity, DisableMemoryIntegrity,
 } from '../../wailsjs/go/main/App'
 import WaitModal from '../components/WaitModal.vue'
+import { useNotify } from '../composables/useNotify'
 
 const { t: i18n } = useI18n()
-const notify = useNotification()
+const notify = useNotify()
 
 const showModal = ref(false)
 const modalText = ref('')
@@ -34,9 +35,9 @@ async function onServiceToggle(v: boolean) {
 
   try {
     if (v) await RestoreDefender(); else await DisableAllServices()
-    notify.success({ title: i18n('sec.notifyTitle'), description: i18n('sec.restartRequired'), duration: 6000 })
+    notify.create({ title: i18n('sec.notifyTitle'), description: i18n('sec.restartRequired'), duration: 6000 })
   } catch (e: any) {
-    notify.error({ title: i18n('sec.notifyTitle'), description: e?.message || 'Error', duration: 6000 })
+    notify.create({ title: i18n('sec.notifyTitle'), description: e?.message || 'Error', duration: 6000 })
   } finally {
     showModal.value = false
   }
@@ -61,10 +62,8 @@ async function onMemIntegrity(v: boolean) {
 <template>
   <div class="page">
     <WaitModal :show="showModal" :text="modalText" />
-    <h2>{{ i18n('sec.title') }}</h2>
-
     <div class="setting-card">
-      <div class="setting-card-header">
+      <div class="setting-card-header setting-card-header--flat">
         <span class="header-title">{{ i18n('sec.defenderTitle') }}</span>
       </div>
       <div class="setting-row">
@@ -77,9 +76,8 @@ async function onMemIntegrity(v: boolean) {
     </div>
 
     <div class="setting-card">
-      <div class="setting-card-header">
+      <div class="setting-card-header setting-card-header--flat">
         <span class="header-title">{{ i18n('sec.systemProtection') }}</span>
-        <span class="header-desc">{{ i18n('sec.systemProtectionDesc') }}</span>
       </div>
       <div class="setting-row">
         <div>
