@@ -40,9 +40,8 @@ func EnableMemoryCompression() bool           { return false }
 func DisableMemoryCompression() bool          { return false }
 func ClearShaderCache() string                { return "仅支持 Windows" }
 
-func GetDefenderStatus() bool                 { return true }
+func GetSecurityHealthServiceStatus() bool    { return true }
 func RestoreDefender() bool                   { return false }
-func DisableDefenderEngine() bool             { return false }
 func DisableAllServices() bool                { return false }
 func GetUacStatus() bool                      { return true }
 func EnableUac() bool                         { return false }

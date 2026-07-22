@@ -9,8 +9,6 @@ export function DisableAllServices():Promise<boolean>;
 
 export function DisableCState():Promise<boolean>;
 
-export function DisableDefenderEngine():Promise<boolean>;
-
 export function DisableDriverUpdates():Promise<boolean>;
 
 export function DisableFastStartup():Promise<boolean>;
@@ -77,8 +75,6 @@ export function GetCStateStatus():Promise<boolean>;
 
 export function GetCurrentVersion():Promise<string>;
 
-export function GetDefenderStatus():Promise<boolean>;
-
 export function GetDriverUpdatesStatus():Promise<boolean>;
 
 export function GetEdgeSwipeStatus():Promise<boolean>;
@@ -116,6 +112,8 @@ export function GetRemoveShieldStatus():Promise<boolean>;
 export function GetRemoveShortcutArrowStatus():Promise<boolean>;
 
 export function GetRemoveShortcutTextStatus():Promise<boolean>;
+
+export function GetSecurityHealthServiceStatus():Promise<boolean>;
 
 export function GetSuperfetchStatus():Promise<boolean>;
 

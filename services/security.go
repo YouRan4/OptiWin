@@ -3,30 +3,23 @@
 package services
 
 import (
+	"OptiWin/utils"
 	"fmt"
 	"os/exec"
 	"syscall"
-
-	"OptiWin/utils"
 
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
 )
 
-func GetDefenderStatus() bool {
-	v, err := utils.RegReadDWord(registry.LOCAL_MACHINE,
-		`SOFTWARE\Microsoft\Windows Defender`, "DisableAntiSpyware")
-	if err == nil && v == 1 {
-		return false
-	}
-
+func GetSecurityHealthServiceStatus() bool {
 	mgr, err := windows.OpenSCManager(nil, nil, windows.SC_MANAGER_CONNECT)
 	if err != nil {
 		return false
 	}
 	defer windows.CloseServiceHandle(mgr)
 
-	svcName, _ := syscall.UTF16PtrFromString("WinDefend")
+	svcName, _ := syscall.UTF16PtrFromString("SecurityHealthService")
 	svc, err := windows.OpenService(mgr, svcName, windows.SERVICE_QUERY_STATUS)
 	if err != nil {
 		return false
@@ -36,18 +29,9 @@ func GetDefenderStatus() bool {
 	var status windows.SERVICE_STATUS
 	err = windows.QueryServiceStatus(svc, &status)
 	if err != nil {
-		return true
-	}
-	if status.CurrentState != windows.SERVICE_RUNNING {
 		return false
 	}
-
-	v, err = utils.RegReadDWord(registry.LOCAL_MACHINE,
-		`SOFTWARE\Microsoft\Windows Defender`, "DisableAntiSpyware")
-	if err == nil && v == 1 {
-		return false
-	}
-	return true
+	return status.CurrentState == windows.SERVICE_RUNNING
 }
 
 func disableService(name string) {
@@ -110,7 +94,7 @@ func RestoreDefender() bool {
 	return true
 }
 
-func DisableDefenderEngine() bool {
+func DisableAllServices() bool {
 	defPath := `SOFTWARE\Policies\Microsoft\Windows Defender`
 	rtPath := `SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection`
 
@@ -128,12 +112,6 @@ func DisableDefenderEngine() bool {
 	regAddDWord(rtPath, "LocalSettingOverrideDisableOnAccessProtection", 0)
 	regAddDWord(rtPath, "LocalSettingOverrideDisableIOAVProtection", 0)
 	regAddDWord(rtPath, "LocalSettingOverrideDisableIntrusionPreventionSystem", 0)
-
-	return true
-}
-
-func DisableAllServices() bool {
-	DisableDefenderEngine()
 
 	disableService("WinDefend")
 	disableService("WdBoot")

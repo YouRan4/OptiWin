@@ -17,8 +17,7 @@
     "title": "安全",
     "notifyTitle": "安全中心",
     "restartRequired": "需要重启系统才能完全生效",
-    "defenderTitle": "Windows 安全中心",
-    "defenderDesc": "完全开启或选择性的关闭或卸载 Defender",
+    "defenderTitle": "防病毒与威胁软件",
     "systemProtection": "系统防护",
     "systemProtectionDesc": "UAC、VBS、内存完整性设置",
     "uac": "UAC",
@@ -27,16 +26,9 @@
     "vbsDesc": "基于虚拟化的安全，使用硬件虚拟化增强系统安全",
     "memIntegrity": "内存完整性",
     "memIntegrityDesc": "核心隔离功能，防止恶意代码注入高安全性进程",
-    "selectAction": "选择操作",
-    "execute": "执行",
     "operating": "执行中...",
-    "helpTitle": "操作说明",
-    "helpRestore": "将安全中心恢复到初始状态",
-    "helpDisableEngine": "禁用安全中心的防病毒以及实时监测引擎，减少资源占用，保留 UI",
-    "helpDisableAll": "禁用安全中心所有服务，禁用后 UI 无法打开",
-    "restore": "恢复",
-    "disableEngine": "禁用安全中心引擎",
-    "disableAll": "禁用安全中心所有服务"
+    "disableAll": "Windows 安全中心",
+    "disableAllDesc": "Windows安全中心将保护您的电脑。由于持续在后台运行，这将对性能产生影响。"
   },
   "upd": {
     "title": "更新",

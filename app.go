@@ -146,10 +146,9 @@ func (a *App) DisableMemoryCompression() bool   { return services.DisableMemoryC
 func (a *App) ClearShaderCache() string { return services.ClearShaderCache() }
 
 // --- Defender ---
-func (a *App) GetDefenderStatus() bool       { return services.GetDefenderStatus() }
-func (a *App) RestoreDefender() bool         { return services.RestoreDefender() }
-func (a *App) DisableDefenderEngine() bool   { return services.DisableDefenderEngine() }
-func (a *App) DisableAllServices() bool      { return services.DisableAllServices() }
+func (a *App) GetSecurityHealthServiceStatus() bool { return services.GetSecurityHealthServiceStatus() }
+func (a *App) RestoreDefender() bool                { return services.RestoreDefender() }
+func (a *App) DisableAllServices() bool             { return services.DisableAllServices() }
 
 // --- UAC ---
 func (a *App) GetUacStatus() bool { return services.GetUacStatus() }

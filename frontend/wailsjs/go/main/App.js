@@ -18,10 +18,6 @@ export function DisableCState() {
   return window['go']['main']['App']['DisableCState']();
 }
 
-export function DisableDefenderEngine() {
-  return window['go']['main']['App']['DisableDefenderEngine']();
-}
-
 export function DisableDriverUpdates() {
   return window['go']['main']['App']['DisableDriverUpdates']();
 }
@@ -154,10 +150,6 @@ export function GetCurrentVersion() {
   return window['go']['main']['App']['GetCurrentVersion']();
 }
 
-export function GetDefenderStatus() {
-  return window['go']['main']['App']['GetDefenderStatus']();
-}
-
 export function GetDriverUpdatesStatus() {
   return window['go']['main']['App']['GetDriverUpdatesStatus']();
 }
@@ -232,6 +224,10 @@ export function GetRemoveShortcutArrowStatus() {
 
 export function GetRemoveShortcutTextStatus() {
   return window['go']['main']['App']['GetRemoveShortcutTextStatus']();
+}
+
+export function GetSecurityHealthServiceStatus() {
+  return window['go']['main']['App']['GetSecurityHealthServiceStatus']();
 }
 
 export function GetSuperfetchStatus() {
