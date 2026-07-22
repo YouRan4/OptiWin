@@ -21,13 +21,18 @@
 ## Features
 
 - **Home** — Project info + System Info (OS / CPU / Memory / IP)
-- **Security** — Windows Defender / UAC / VBS / Memory Integrity
+- **Security** — Security Engine Disable / Service Disable / Restore / UAC / VBS / Memory Integrity
 - **Performance** — Power Plan / C-State / Superfetch / Memory Compression / Fullscreen Optimization / Windowed Optimization / MPO / Shader Cache
 - **Personalization** — Notifications / Balloon Notifications / Edge Swipe / Context Menu / Explorer Home & Gallery / Shortcut Appearance
 - **Utilities** — Hibernate / Fast Startup / Photo Viewer / Uninstall Edge / WebView2 / Safe Mode / Enter BIOS
 - **Updates** — Certificate Update / KGL Update / Pause Updates / Hide Update Page / Driver Update Policy / Update Channel
 
 ## Based on [meetrevision/revision-tool](https://github.com/meetrevision/revision-tool)
+
+## Credits
+
+- **[PowerRun](https://www.sordum.org/81912/run-as-trustedinstaller-program-v1-6/)** — Used for executing registry operations with TrustedInstaller privileges
+- **[ionuttbara/windows-defender-remover](https://github.com/ionuttbara/windows-defender-remover)** — Reference for Defender disable approach
 
 ## License
 
