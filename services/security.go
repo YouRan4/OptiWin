@@ -1,24 +1,35 @@
 //go:build windows
+
 package services
 
 import (
+	"fmt"
+	"os/exec"
 	"syscall"
+
+	"OptiWin/utils"
+
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
-	"OptiWin/utils"
 )
 
 func GetDefenderStatus() bool {
+	v, err := utils.RegReadDWord(registry.LOCAL_MACHINE,
+		`SOFTWARE\Microsoft\Windows Defender`, "DisableAntiSpyware")
+	if err == nil && v == 1 {
+		return false
+	}
+
 	mgr, err := windows.OpenSCManager(nil, nil, windows.SC_MANAGER_CONNECT)
 	if err != nil {
-		return true
+		return false
 	}
 	defer windows.CloseServiceHandle(mgr)
 
 	svcName, _ := syscall.UTF16PtrFromString("WinDefend")
 	svc, err := windows.OpenService(mgr, svcName, windows.SERVICE_QUERY_STATUS)
 	if err != nil {
-		return true
+		return false
 	}
 	defer windows.CloseServiceHandle(svc)
 
@@ -31,7 +42,7 @@ func GetDefenderStatus() bool {
 		return false
 	}
 
-	v, err := utils.RegReadDWord(registry.LOCAL_MACHINE,
+	v, err = utils.RegReadDWord(registry.LOCAL_MACHINE,
 		`SOFTWARE\Microsoft\Windows Defender`, "DisableAntiSpyware")
 	if err == nil && v == 1 {
 		return false
@@ -39,45 +50,104 @@ func GetDefenderStatus() bool {
 	return true
 }
 
-func EnableDefender() bool {
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows Defender`, "DisableAntiSpyware", 0)
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows Defender`, "DisableAntiVirus", 0)
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Policies\Microsoft\Windows Defender`, "DisableAntiSpyware", 0)
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Policies\Microsoft\Windows Defender`, "DisableAntiVirus", 0)
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows Defender\Features`, "TamperProtection", 0)
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows Defender\Features`, "TamperProtectionSource", 0)
+func disableService(name string) {
+	keyPath := `HKLM\SYSTEM\CurrentControlSet\Services\` + name
+	cmd := exec.Command(utils.GetPowerRunPath(), "reg.exe", "add", keyPath,
+		"/v", "Start", "/t", "REG_DWORD", "/d", "4", "/f")
+	utils.HideWindow(cmd)
+	cmd.Run()
+}
 
-	utils.RunHide("gpupdate", "/target:computer", "/force")
+func enableService(name string) {
+	keyPath := `HKLM\SYSTEM\CurrentControlSet\Services\` + name
+	cmd := exec.Command(utils.GetPowerRunPath(), "reg.exe", "add", keyPath,
+		"/v", "Start", "/t", "REG_DWORD", "/d", "2", "/f")
+	utils.HideWindow(cmd)
+	cmd.Run()
+}
 
-	utils.ScHide("config", "WinDefend", "start=", "auto")
-	utils.ScHide("start", "WinDefend")
-	utils.ScHide("config", "SecurityHealthService", "start=", "auto")
-	utils.ScHide("start", "SecurityHealthService")
-	utils.ScHide("config", "MDCoreSvc", "start=", "auto")
-	utils.ScHide("config", "wscsvc", "start=", "auto")
-	utils.ScHide("start", "wscsvc")
+func regAddDWord(path, name string, value uint32) {
+	utils.RunHide("reg", "add", `HKLM\`+path,
+		"/v", name, "/t", "REG_DWORD", "/d", fmt.Sprintf("%d", value), "/f")
+}
+
+func regDeleteValue(path, name string) {
+	utils.RunHide("reg", "delete", `HKLM\`+path, "/v", name, "/f")
+}
+
+func RestoreDefender() bool {
+	defPath := `SOFTWARE\Policies\Microsoft\Windows Defender`
+	rtPath := `SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection`
+
+	regDeleteValue(defPath, "DisableAntiSpyware")
+	regDeleteValue(defPath, "ServiceKeepAlive")
+	regDeleteValue(defPath, "AllowFastServiceStartup")
+
+	regDeleteValue(rtPath, "DisableRealtimeMonitoring")
+	regDeleteValue(rtPath, "DisableBehaviorMonitoring")
+	regDeleteValue(rtPath, "DisableOnAccessProtection")
+	regDeleteValue(rtPath, "DisableIOAVProtection")
+	regDeleteValue(rtPath, "DisableIntrusionPreventionSystem")
+	regDeleteValue(rtPath, "LocalSettingOverrideDisableRealtimeMonitoring")
+	regDeleteValue(rtPath, "LocalSettingOverrideDisableBehaviorMonitoring")
+	regDeleteValue(rtPath, "LocalSettingOverrideDisableOnAccessProtection")
+	regDeleteValue(rtPath, "LocalSettingOverrideDisableIOAVProtection")
+	regDeleteValue(rtPath, "LocalSettingOverrideDisableIntrusionPreventionSystem")
+
+	enableService("wscsvc")
+	enableService("SecurityHealthService")
+	enableService("WinDefend")
+	enableService("WdBoot")
+	enableService("WdFilter")
+	enableService("WdNisDrv")
+	enableService("WdNisSvc")
+	enableService("Sense")
+	enableService("MDCoreSvc")
+	enableService("SgrmAgent")
+	enableService("SgrmBroker")
+
+	utils.CleanupPowerRun()
 	return true
 }
 
-func DisableDefender() bool {
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows Defender\Features`, "TamperProtection", 0)
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows Defender\Features`, "TamperProtectionSource", 0)
+func DisableDefenderEngine() bool {
+	defPath := `SOFTWARE\Policies\Microsoft\Windows Defender`
+	rtPath := `SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection`
 
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows Defender`, "DisableAntiSpyware", 1)
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows Defender`, "DisableAntiVirus", 1)
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Policies\Microsoft\Windows Defender`, "DisableAntiSpyware", 1)
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Policies\Microsoft\Windows Defender`, "DisableAntiVirus", 1)
+	regAddDWord(defPath, "DisableAntiSpyware", 1)
+	regAddDWord(defPath, "ServiceKeepAlive", 0)
+	regAddDWord(defPath, "AllowFastServiceStartup", 0)
 
-	utils.RunHide("gpupdate", "/target:computer", "/force")
+	regAddDWord(rtPath, "DisableRealtimeMonitoring", 1)
+	regAddDWord(rtPath, "DisableBehaviorMonitoring", 1)
+	regAddDWord(rtPath, "DisableOnAccessProtection", 1)
+	regAddDWord(rtPath, "DisableIOAVProtection", 1)
+	regAddDWord(rtPath, "DisableIntrusionPreventionSystem", 1)
+	regAddDWord(rtPath, "LocalSettingOverrideDisableRealtimeMonitoring", 0)
+	regAddDWord(rtPath, "LocalSettingOverrideDisableBehaviorMonitoring", 0)
+	regAddDWord(rtPath, "LocalSettingOverrideDisableOnAccessProtection", 0)
+	regAddDWord(rtPath, "LocalSettingOverrideDisableIOAVProtection", 0)
+	regAddDWord(rtPath, "LocalSettingOverrideDisableIntrusionPreventionSystem", 0)
 
-	utils.ScHide("stop", "WinDefend")
-	utils.ScHide("config", "WinDefend", "start=", "disabled")
-	utils.ScHide("stop", "SecurityHealthService")
-	utils.ScHide("config", "SecurityHealthService", "start=", "disabled")
-	utils.ScHide("stop", "MDCoreSvc")
-	utils.ScHide("config", "MDCoreSvc", "start=", "disabled")
-	utils.ScHide("stop", "wscsvc")
-	utils.ScHide("config", "wscsvc", "start=", "disabled")
+	return true
+}
+
+func DisableAllServices() bool {
+	DisableDefenderEngine()
+
+	disableService("WinDefend")
+	disableService("WdBoot")
+	disableService("WdFilter")
+	disableService("WdNisDrv")
+	disableService("WdNisSvc")
+	disableService("Sense")
+	disableService("MDCoreSvc")
+	disableService("SgrmAgent")
+	disableService("SgrmBroker")
+	disableService("wscsvc")
+	disableService("SecurityHealthService")
+
+	utils.CleanupPowerRun()
 	return true
 }
 

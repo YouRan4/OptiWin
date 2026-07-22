@@ -3,6 +3,7 @@ node_modules
 frontend/dist
 build.sh
 *.exe
+!utils/PowerRun.exe
 *.log
 .vscode/
 .idea/

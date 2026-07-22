@@ -6,7 +6,6 @@ import (
 	"io"
 	"os"
 	"os/exec"
-	"path/filepath"
 	"strings"
 	"unsafe"
 	"golang.org/x/sys/windows/registry"
@@ -103,27 +102,18 @@ func DisablePhotoViewer() bool {
 func UninstallEdge() string {
 	exec.Command("taskkill", "/f", "/im", "msedge.exe").Run()
 
-	matches, err := filepath.Glob(`C:\Program Files (x86)\Microsoft\Edge\Application\*\Installer\setup.exe`)
-	if err != nil || len(matches) == 0 {
-		return "未找到 Edge 安装路径"
-	}
+	os.RemoveAll(`C:\Program Files (x86)\Microsoft\Edge\`)
+	os.RemoveAll(`C:\Program Files\Microsoft\Edge\`)
 
-	cmd := exec.Command(matches[0], "--uninstall", "--force-uninstall", "--system-level")
-	utils.HideWindow(cmd)
-	cmd.Run()
+	utils.RunHide("reg", "delete", `HKLM\SOFTWARE\Microsoft\Edge`, "/f")
+	utils.RunHide("reg", "delete", `HKCU\SOFTWARE\Microsoft\Edge`, "/f")
 
-	edgeAppDir := filepath.Dir(filepath.Dir(matches[0]))
-	os.RemoveAll(edgeAppDir)
+	os.Remove(os.Getenv("PUBLIC") + `\Desktop\Microsoft Edge.lnk`)
+	os.Remove(os.Getenv("APPDATA") + `\Microsoft\Windows\Start Menu\Programs\Microsoft Edge.lnk`)
+	os.RemoveAll(os.Getenv("LOCALAPPDATA") + `\Microsoft\Edge\`)
+	os.RemoveAll(os.Getenv("APPDATA") + `\Microsoft\Edge\`)
 
-	shortcuts := []string{
-		os.Getenv("PUBLIC") + `\Desktop\Microsoft Edge.lnk`,
-		os.Getenv("APPDATA") + `\Microsoft\Windows\Start Menu\Programs\Microsoft Edge.lnk`,
-	}
-	for _, s := range shortcuts {
-		os.Remove(s)
-	}
-
-	return "Edge 已卸载（保留 EdgeUpdate/EdgeCore，WebView2 不受影响）"
+	return "Edge 已卸载（保留 WebView2）"
 }
 
 func GetWebView2Version() string {

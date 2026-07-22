@@ -10,12 +10,16 @@ export function ClearShaderCache() {
   return window['go']['main']['App']['ClearShaderCache']();
 }
 
+export function DisableAllServices() {
+  return window['go']['main']['App']['DisableAllServices']();
+}
+
 export function DisableCState() {
   return window['go']['main']['App']['DisableCState']();
 }
 
-export function DisableDefender() {
-  return window['go']['main']['App']['DisableDefender']();
+export function DisableDefenderEngine() {
+  return window['go']['main']['App']['DisableDefenderEngine']();
 }
 
 export function DisableDriverUpdates() {
@@ -80,10 +84,6 @@ export function DisableWindowedOptimization() {
 
 export function EnableCState() {
   return window['go']['main']['App']['EnableCState']();
-}
-
-export function EnableDefender() {
-  return window['go']['main']['App']['EnableDefender']();
 }
 
 export function EnableDriverUpdates() {
@@ -284,6 +284,10 @@ export function RebootToBios() {
 
 export function RestartExplorer() {
   return window['go']['main']['App']['RestartExplorer']();
+}
+
+export function RestoreDefender() {
+  return window['go']['main']['App']['RestoreDefender']();
 }
 
 export function SetEdgeSwipe(arg1) {

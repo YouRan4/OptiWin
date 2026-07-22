@@ -5,9 +5,11 @@ export function CheckUpdate():Promise<string>;
 
 export function ClearShaderCache():Promise<string>;
 
+export function DisableAllServices():Promise<boolean>;
+
 export function DisableCState():Promise<boolean>;
 
-export function DisableDefender():Promise<boolean>;
+export function DisableDefenderEngine():Promise<boolean>;
 
 export function DisableDriverUpdates():Promise<boolean>;
 
@@ -40,8 +42,6 @@ export function DisableVisibility():Promise<boolean>;
 export function DisableWindowedOptimization():Promise<boolean>;
 
 export function EnableCState():Promise<boolean>;
-
-export function EnableDefender():Promise<boolean>;
 
 export function EnableDriverUpdates():Promise<boolean>;
 
@@ -142,6 +142,8 @@ export function RebootSystem():Promise<boolean>;
 export function RebootToBios():Promise<boolean>;
 
 export function RestartExplorer():Promise<string>;
+
+export function RestoreDefender():Promise<boolean>;
 
 export function SetEdgeSwipe(arg1:boolean):Promise<boolean>;
 

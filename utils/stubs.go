@@ -8,8 +8,9 @@ import (
 )
 
 func HideWindow(cmd *exec.Cmd) {}
-func ScHide(args ...string)    {}
 func RunHide(name string, args ...string) {}
 func RestartExplorer() {}
 func GetHTTPClient() *http.Client { return &http.Client{} }
 func GetProxyInfo() string        { return "未使用代理" }
+func GetPowerRunPath() string     { return "" }
+func CleanupPowerRun()            {}

@@ -93,6 +93,7 @@ function reExplorer() {
 /* 深色主题 */
 :root[data-theme="dark"] {
   --accent: #60CDFF;
+  --spinner-color: #FFFFFF;
   --border: rgba(255,255,255,0.06);
   --text: #E5E5E5;
   --text2: rgba(255,255,255,0.4);
@@ -105,6 +106,7 @@ function reExplorer() {
 /* 浅色主题 */
 :root[data-theme="light"] {
   --accent: #1890FF;
+  --spinner-color: #000000;
   --border: rgba(0,0,0,0.1);
   --text: #1A1A1A;
   --text2: rgba(0,0,0,0.45);

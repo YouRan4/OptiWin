@@ -15,12 +15,6 @@ func HideWindow(cmd *exec.Cmd) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
 }
 
-func ScHide(args ...string) {
-	cmd := exec.Command("sc", args...)
-	HideWindow(cmd)
-	cmd.Run()
-}
-
 func RunHide(name string, args ...string) {
 	cmd := exec.Command(name, args...)
 	HideWindow(cmd)

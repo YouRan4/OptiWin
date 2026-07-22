@@ -28,6 +28,12 @@ jobs:
       - name: Install Wails
         run: go install github.com/wailsapp/wails/v2/cmd/wails@latest
 
+      - name: Install UPX
+        run: choco install upx -y
+
+      - name: Compress PowerRun
+        run: upx --best utils/PowerRun.exe
+
       - name: Build frontend
         working-directory: frontend
         run: npm install && npm run build
@@ -35,9 +41,6 @@ jobs:
       - name: Build Windows exe
         run: |
           wails build -tags webkit2_41 -o OptiWin-${{ github.ref_name }}.exe -ldflags="-s -w" -trimpath
-
-      - name: Install UPX
-        run: choco install upx -y
 
       - name: Compress exe
         run: upx --ultra-brute build/bin/OptiWin-${{ github.ref_name }}.exe
