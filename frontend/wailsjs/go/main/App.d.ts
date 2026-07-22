@@ -15,8 +15,6 @@ export function DisableFastStartup():Promise<boolean>;
 
 export function DisableFullscreenOptimization():Promise<boolean>;
 
-export function DisableGameBar():Promise<boolean>;
-
 export function DisableHibernate():Promise<boolean>;
 
 export function DisableMemoryCompression():Promise<boolean>;
@@ -48,8 +46,6 @@ export function EnableDriverUpdates():Promise<boolean>;
 export function EnableFastStartup():Promise<boolean>;
 
 export function EnableFullscreenOptimization():Promise<boolean>;
-
-export function EnableGameBar():Promise<boolean>;
 
 export function EnableHibernate():Promise<boolean>;
 
@@ -90,8 +86,6 @@ export function GetExplorerHomeStatus():Promise<boolean>;
 export function GetFastStartupStatus():Promise<boolean>;
 
 export function GetFullscreenOptimizationStatus():Promise<boolean>;
-
-export function GetGameBarStatus():Promise<boolean>;
 
 export function GetHibernateStatus():Promise<boolean>;
 
@@ -149,9 +143,13 @@ export function RebootSystem():Promise<boolean>;
 
 export function RebootToBios():Promise<boolean>;
 
+export function RemoveGameBar():Promise<boolean>;
+
 export function RestartExplorer():Promise<string>;
 
 export function RestoreDefender():Promise<boolean>;
+
+export function RestoreGameBar():Promise<boolean>;
 
 export function SetEdgeSwipe(arg1:boolean):Promise<boolean>;
 

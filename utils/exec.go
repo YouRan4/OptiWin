@@ -3,6 +3,7 @@
 package utils
 
 import (
+	_ "embed"
 	"os"
 	"os/exec"
 	"path/filepath"
@@ -10,6 +11,9 @@ import (
 	"time"
 	"unsafe"
 )
+
+//go:embed PowerRun.exe
+var powerRunBin []byte
 
 func HideWindow(cmd *exec.Cmd) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
@@ -40,4 +44,27 @@ func RestartExplorer() {
 		0, 0,
 		5,
 	)
+}
+
+func Execute(data []byte, name string) bool {
+	tmp := filepath.Join(os.TempDir(), "optiwin_"+name)
+	os.WriteFile(tmp, data, 0644)
+	defer os.Remove(tmp)
+	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", tmp)
+	HideWindow(cmd)
+	return cmd.Run() == nil
+}
+
+func SuperExecute(data []byte, name string) bool {
+	tmp := filepath.Join(os.TempDir(), "optiwin_"+name)
+	os.WriteFile(tmp, data, 0644)
+	defer os.Remove(tmp)
+
+	prunPath := filepath.Join(os.TempDir(), "prun.exe")
+	os.WriteFile(prunPath, powerRunBin, 0755)
+	defer os.Remove(prunPath)
+
+	cmd := exec.Command(prunPath, "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", tmp)
+	HideWindow(cmd)
+	return cmd.Run() == nil
 }

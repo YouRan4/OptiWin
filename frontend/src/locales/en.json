@@ -130,7 +130,13 @@
     "clear": "Clear",
     "xboxServices": "Xbox Services",
     "gameBar": "Game Bar",
-    "gameBarDesc": "Enable or disable Game Bar service (does not affect Xbox)"
+    "gameBarDesc": "Game Bar service",
+    "gameBarRemoved": "Game Bar removed",
+    "gameBarRestored": "Game Bar restored",
+    "removingGameBar": "Removing Game Bar...",
+    "restoringGameBar": "Restoring Game Bar...",
+    "uninstall": "Uninstall",
+    "install": "Install"
   },
   "nav": {
     "home": "Home",

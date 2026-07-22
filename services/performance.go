@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 	"unsafe"
 
 	"golang.org/x/sys/windows/registry"
@@ -242,35 +243,14 @@ func ClearShaderCache() string {
 
 // --- Game Bar ---
 
-func GetGameBarStatus() bool {
-	v1, err1 := utils.RegReadDWord(registry.CURRENT_USER,
-		`Software\Microsoft\Windows\CurrentVersion\GameDVR`, "AppCaptureEnabled")
-	v2, err2 := utils.RegReadDWord(registry.CURRENT_USER,
-		`System\GameConfigStore`, "GameDVR_Enabled")
-
-	if (err1 == nil && v1 != 0) || (err2 == nil && v2 != 0) {
-		return true
-	}
-	if (err1 == nil && v1 == 0) && (err2 == nil && v2 == 0) {
-		return false
-	}
-	return true
+func RemoveGameBar() bool {
+	r := utils.Execute(utils.RemoveGameBarScript, "removeGameBar.ps1")
+	time.Sleep(1 * time.Second)
+	return r
 }
 
-func EnableGameBar() bool {
-	utils.RegSetDWordBool(registry.CURRENT_USER,
-		`Software\Microsoft\Windows\CurrentVersion\GameDVR`, "AppCaptureEnabled", 1)
-	utils.RegSetDWordBool(registry.CURRENT_USER,
-		`System\GameConfigStore`, "GameDVR_Enabled", 1)
-	utils.RestartExplorer()
-	return true
-}
-
-func DisableGameBar() bool {
-	utils.RegSetDWordBool(registry.CURRENT_USER,
-		`Software\Microsoft\Windows\CurrentVersion\GameDVR`, "AppCaptureEnabled", 0)
-	utils.RegSetDWordBool(registry.CURRENT_USER,
-		`System\GameConfigStore`, "GameDVR_Enabled", 0)
-	utils.RestartExplorer()
-	return true
+func RestoreGameBar() bool {
+	r := utils.Execute(utils.RestoreGameBarScript, "restoreGameBar.ps1")
+	time.Sleep(1 * time.Second)
+	return r
 }

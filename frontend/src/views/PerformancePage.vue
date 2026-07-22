@@ -12,13 +12,16 @@ import {
   GetMpoStatus, EnableMpo, DisableMpo,
   GetMemoryCompressionStatus, EnableMemoryCompression, DisableMemoryCompression,
   ClearShaderCache,
-  GetGameBarStatus, EnableGameBar, DisableGameBar,
+  RemoveGameBar, RestoreGameBar,
 } from '../../wailsjs/go/main/App'
 
 import { useNotify } from '../composables/useNotify'
+import WaitModal from '../components/WaitModal.vue'
 
 const { t: i18n } = useI18n()
 const notify = useNotify()
+const showModal = ref(false)
+const modalText = ref('')
 
 const reviPlan = ref(false)
 const cstate = ref(true)
@@ -27,7 +30,6 @@ const memCompress = ref(true)
 const fullscreen = ref(true)
 const windowOpt = ref(true)
 const mpo = ref(true)
-const gameBar = ref(true)
 
 onMounted(async () => {
   reviPlan.value = await GetUltimatePerformanceStatus()
@@ -37,7 +39,6 @@ onMounted(async () => {
   fullscreen.value = await GetFullscreenOptimizationStatus()
   windowOpt.value = await GetWindowedOptimizationStatus()
   mpo.value = await GetMpoStatus()
-  gameBar.value = await GetGameBarStatus()
 })
 
 function showRestartNotice(title: string) {
@@ -83,14 +84,32 @@ async function onClearShaderCache() {
   notify.create({ title: i18n('perf.shaderCache'), description: msg, duration: 5000 })
 }
 
-async function onGameBar(v: boolean) {
-  if (v) await EnableGameBar(); else await DisableGameBar()
-  gameBar.value = await GetGameBarStatus()
+async function onRemoveGameBar() {
+  modalText.value = i18n('perf.removingGameBar')
+  showModal.value = true
+  try {
+    await RemoveGameBar()
+    notify.create({ title: i18n('perf.gameBar'), description: i18n('perf.gameBarRemoved'), duration: 5000 })
+  } finally {
+    showModal.value = false
+  }
+}
+
+async function onRestoreGameBar() {
+  modalText.value = i18n('perf.restoringGameBar')
+  showModal.value = true
+  try {
+    await RestoreGameBar()
+    notify.create({ title: i18n('perf.gameBar'), description: i18n('perf.gameBarRestored'), duration: 5000 })
+  } finally {
+    showModal.value = false
+  }
 }
 </script>
 
 <template>
   <div class="page">
+    <WaitModal :show="showModal" :text="modalText" />
     <div class="setting-card">
       <div class="setting-card-header setting-card-header--flat"><span class="header-title">{{ i18n('perf.powerPlan') }}</span></div>
       <div class="setting-row">
@@ -166,7 +185,10 @@ async function onGameBar(v: boolean) {
           <div class="row-label">{{ i18n('perf.gameBar') }}</div>
           <div class="row-desc">{{ i18n('perf.gameBarDesc') }}</div>
         </div>
-        <n-switch v-model:value="gameBar" @update:value="onGameBar" />
+        <div style="display: flex; gap: 8px;">
+          <n-button size="small" @click="onRemoveGameBar">{{ i18n('perf.uninstall') }}</n-button>
+          <n-button size="small" @click="onRestoreGameBar">{{ i18n('perf.install') }}</n-button>
+        </div>
       </div>
     </div>
   </div>

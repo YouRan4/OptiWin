@@ -39,9 +39,8 @@ func GetMemoryCompressionStatus() bool        { return true }
 func EnableMemoryCompression() bool           { return false }
 func DisableMemoryCompression() bool          { return false }
 func ClearShaderCache() string                { return "仅支持 Windows" }
-func GetGameBarStatus() bool                  { return false }
-func EnableGameBar() bool                     { return false }
-func DisableGameBar() bool                    { return false }
+func RemoveGameBar() bool                     { return false }
+func RestoreGameBar() bool                    { return false }
 
 func GetSecurityHealthServiceStatus() bool    { return true }
 func RestoreDefender() bool                   { return false }

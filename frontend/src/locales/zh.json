@@ -130,7 +130,13 @@
     "clear": "清理",
     "xboxServices": "Xbox 服务",
     "gameBar": "Game Bar",
-    "gameBarDesc": "启用/禁用 Game Bar 服务（不影响 Xbox）"
+    "gameBarDesc": "Game Bar 服务",
+    "gameBarRemoved": "Game Bar 已移除",
+    "gameBarRestored": "Game Bar 已恢复",
+    "removingGameBar": "正在移除 Game Bar...",
+    "restoringGameBar": "正在恢复 Game Bar...",
+    "uninstall": "卸载",
+    "install": "安装"
   },
   "nav": {
     "home": "主页",

@@ -2,6 +2,7 @@ package main
 
 import (
 	"context"
+	_ "embed"
 	"encoding/json"
 	"fmt"
 	"io"
@@ -11,6 +12,24 @@ import (
 	"OptiWin/services"
 	"OptiWin/utils"
 )
+
+//go:embed ps1/removeGameBar.ps1
+var removeGameBarPS1 []byte
+
+//go:embed ps1/restoreGameBar.ps1
+var restoreGameBarPS1 []byte
+
+//go:embed ps1/disableDefender.ps1
+var disableDefenderPS1 []byte
+
+//go:embed ps1/restoreDefender.ps1
+var restoreDefenderPS1 []byte
+
+//go:embed ps1/enableTaskManager.ps1
+var enableTaskManagerPS1 []byte
+
+//go:embed ps1/disableTaskManager.ps1
+var disableTaskManagerPS1 []byte
 
 type App struct {
 	ctx context.Context
@@ -22,6 +41,12 @@ func NewApp() *App {
 
 func (a *App) startup(ctx context.Context) {
 	a.ctx = ctx
+	utils.RemoveGameBarScript = removeGameBarPS1
+	utils.RestoreGameBarScript = restoreGameBarPS1
+	utils.DisableDefenderScript = disableDefenderPS1
+	utils.RestoreDefenderScript = restoreDefenderPS1
+	utils.EnableTaskManagerScript = enableTaskManagerPS1
+	utils.DisableTaskManagerScript = disableTaskManagerPS1
 }
 
 func (a *App) GetCurrentVersion() string { return CurrentVersion }
@@ -146,9 +171,8 @@ func (a *App) DisableMemoryCompression() bool   { return services.DisableMemoryC
 func (a *App) ClearShaderCache() string { return services.ClearShaderCache() }
 
 // --- Game Bar ---
-func (a *App) GetGameBarStatus() bool { return services.GetGameBarStatus() }
-func (a *App) EnableGameBar() bool    { return services.EnableGameBar() }
-func (a *App) DisableGameBar() bool   { return services.DisableGameBar() }
+func (a *App) RemoveGameBar() bool  { return services.RemoveGameBar() }
+func (a *App) RestoreGameBar() bool { return services.RestoreGameBar() }
 
 // --- Defender ---
 func (a *App) GetSecurityHealthServiceStatus() bool { return services.GetSecurityHealthServiceStatus() }

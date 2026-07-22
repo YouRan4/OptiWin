@@ -30,10 +30,6 @@ export function DisableFullscreenOptimization() {
   return window['go']['main']['App']['DisableFullscreenOptimization']();
 }
 
-export function DisableGameBar() {
-  return window['go']['main']['App']['DisableGameBar']();
-}
-
 export function DisableHibernate() {
   return window['go']['main']['App']['DisableHibernate']();
 }
@@ -96,10 +92,6 @@ export function EnableFastStartup() {
 
 export function EnableFullscreenOptimization() {
   return window['go']['main']['App']['EnableFullscreenOptimization']();
-}
-
-export function EnableGameBar() {
-  return window['go']['main']['App']['EnableGameBar']();
 }
 
 export function EnableHibernate() {
@@ -180,10 +172,6 @@ export function GetFastStartupStatus() {
 
 export function GetFullscreenOptimizationStatus() {
   return window['go']['main']['App']['GetFullscreenOptimizationStatus']();
-}
-
-export function GetGameBarStatus() {
-  return window['go']['main']['App']['GetGameBarStatus']();
 }
 
 export function GetHibernateStatus() {
@@ -298,12 +286,20 @@ export function RebootToBios() {
   return window['go']['main']['App']['RebootToBios']();
 }
 
+export function RemoveGameBar() {
+  return window['go']['main']['App']['RemoveGameBar']();
+}
+
 export function RestartExplorer() {
   return window['go']['main']['App']['RestartExplorer']();
 }
 
 export function RestoreDefender() {
   return window['go']['main']['App']['RestoreDefender']();
+}
+
+export function RestoreGameBar() {
+  return window['go']['main']['App']['RestoreGameBar']();
 }
 
 export function SetEdgeSwipe(arg1) {

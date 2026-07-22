@@ -5,7 +5,6 @@ package services
 import (
 	"OptiWin/utils"
 	"os"
-	"os/exec"
 	"time"
 
 	"golang.org/x/sys/windows/registry"
@@ -207,24 +206,30 @@ func GetOldTaskManagerStatus() bool {
 }
 
 func SetOldTaskManager(enable bool) bool {
-	target := taskManagerPath + ".bak"
-	source := taskManagerPath
+	var script []byte
+	var name string
 	if enable {
-		target, source = source, target
+		script = utils.EnableTaskManagerScript
+		name = "enableTaskManager.ps1"
+	} else {
+		script = utils.DisableTaskManagerScript
+		name = "disableTaskManager.ps1"
 	}
-	cmd := exec.Command(utils.GetPowerRunPath(), "powershell.exe", "-NoProfile", "-NonInteractive", "-Command",
-		`Rename-Item -Path "`+source+`" -NewName "`+target+`" -Force`)
-	utils.HideWindow(cmd)
-	if cmd.Run() != nil {
+
+	if !utils.SuperExecute(script, name) {
 		return false
 	}
-	// 等待文件系统变更生效
+
+	source := taskManagerPath
+	if enable {
+		source = taskManagerPath + ".bak"
+	}
 	for i := 0; i < 10; i++ {
 		time.Sleep(300 * time.Millisecond)
 		_, err := os.Stat(source)
 		if os.IsNotExist(err) {
-			return true // 源路径已不存在，重命名成功
+			return true
 		}
 	}
-	return false // 超时仍未确认
+	return false
 }
