@@ -28,12 +28,6 @@ func RunHide(name string, args ...string) {
 }
 
 func RestartExplorer() {
-	cacheDir := os.Getenv("LOCALAPPDATA") + `\Microsoft\Windows\Explorer`
-	matches, _ := filepath.Glob(cacheDir + `\iconcache*`)
-	for _, m := range matches {
-		os.Remove(m)
-	}
-
 	exec.Command("taskkill", "/f", "/im", "explorer.exe").Run()
 	time.Sleep(1500 * time.Millisecond)
 
