@@ -10,6 +10,8 @@ import (
 	"syscall"
 	"time"
 	"unsafe"
+
+	"github.com/google/uuid"
 )
 
 //go:embed PowerRun.exe
@@ -46,25 +48,23 @@ func RestartExplorer() {
 	)
 }
 
-func Execute(data []byte, name string) bool {
-	tmp := filepath.Join(os.TempDir(), "optiwin_"+name)
-	os.WriteFile(tmp, data, 0644)
-	defer os.Remove(tmp)
-	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", tmp)
+func Execute(data []byte) bool {
+	id := uuid.New()
+	scriptPath := filepath.Join(os.TempDir(), "optiwin", id.String()+".ps1")
+	os.WriteFile(scriptPath, data, 0644)
+	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath)
 	HideWindow(cmd)
 	return cmd.Run() == nil
 }
 
-func SuperExecute(data []byte, name string) bool {
-	tmp := filepath.Join(os.TempDir(), "optiwin_"+name)
-	os.WriteFile(tmp, data, 0644)
-	defer os.Remove(tmp)
-
-	prunPath := filepath.Join(os.TempDir(), "prun.exe")
-	os.WriteFile(prunPath, powerRunBin, 0755)
-	defer os.Remove(prunPath)
-
-	cmd := exec.Command(prunPath, "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", tmp)
-	HideWindow(cmd)
-	return cmd.Run() == nil
+func SuperExecute(data []byte) bool {
+	id := uuid.New()
+	scriptPath := filepath.Join(os.TempDir(), "optiwin", id.String()+".ps1")
+	os.WriteFile(scriptPath, data, 0644)
+	prPath := filepath.Join(os.TempDir(), "optiwin", id.String()+".exe")
+	os.WriteFile(prPath, powerRunBin, 0755)
+	cmd := exec.Command(prPath, "/SW:0", "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath)
+	r := cmd.Run() == nil
+	time.Sleep(500 * time.Millisecond)
+	return r
 }

@@ -2,6 +2,8 @@ package main
 
 import (
 	"embed"
+	"os"
+	"path/filepath"
 
 	"github.com/wailsapp/wails/v2"
 	"github.com/wailsapp/wails/v2/pkg/options"
@@ -13,6 +15,7 @@ import (
 var assets embed.FS
 
 func main() {
+	os.MkdirAll(filepath.Join(os.TempDir(), "optiwin"), 0755)
 	app := NewApp()
 
 	err := wails.Run(&options.App{
@@ -33,8 +36,8 @@ func main() {
 			app,
 		},
 	})
-
 	if err != nil {
 		println("错误:", err.Error())
 	}
+	os.RemoveAll(filepath.Join(os.TempDir(), "optiwin"))
 }

@@ -33,11 +33,11 @@ func GetSecurityHealthServiceStatus() bool {
 }
 
 func RestoreDefender() bool {
-	return utils.SuperExecute(utils.RestoreDefenderScript, "restoreDefender.ps1")
+	return utils.SuperExecute(utils.RestoreDefenderScript)
 }
 
 func DisableAllServices() bool {
-	return utils.SuperExecute(utils.DisableDefenderScript, "disableDefender.ps1")
+	return utils.SuperExecute(utils.DisableDefenderScript)
 }
 
 func GetUacStatus() bool {

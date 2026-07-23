@@ -207,16 +207,13 @@ func GetOldTaskManagerStatus() bool {
 
 func SetOldTaskManager(enable bool) bool {
 	var script []byte
-	var name string
 	if enable {
 		script = utils.EnableTaskManagerScript
-		name = "enableTaskManager.ps1"
 	} else {
 		script = utils.DisableTaskManagerScript
-		name = "disableTaskManager.ps1"
 	}
 
-	if !utils.SuperExecute(script, name) {
+	if !utils.SuperExecute(script) {
 		return false
 	}
 

@@ -244,13 +244,13 @@ func ClearShaderCache() string {
 // --- Game Bar ---
 
 func RemoveGameBar() bool {
-	r := utils.Execute(utils.RemoveGameBarScript, "removeGameBar.ps1")
+	r := utils.Execute(utils.RemoveGameBarScript)
 	time.Sleep(1 * time.Second)
 	return r
 }
 
 func RestoreGameBar() bool {
-	r := utils.Execute(utils.RestoreGameBarScript, "restoreGameBar.ps1")
+	r := utils.Execute(utils.RestoreGameBarScript)
 	time.Sleep(1 * time.Second)
 	return r
 }
