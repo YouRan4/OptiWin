@@ -18,7 +18,10 @@ import (
 var powerRunBin []byte
 
 func HideWindow(cmd *exec.Cmd) {
-	cmd.SysProcAttr = &syscall.SysProcAttr{HideWindow: true}
+	cmd.SysProcAttr = &syscall.SysProcAttr{
+		HideWindow:    true,
+		CreationFlags: 0x08000000, // CREATE_NO_WINDOW
+	}
 }
 
 func RunHide(name string, args ...string) {

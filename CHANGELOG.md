@@ -1,5 +1,23 @@
 # Changelog
 
+## v1.5.0
+
+### 新增
+- IFEO 镜像劫持管理：查看、添加、删除 IFEO 条目
+- APPX 应用管理：查看已安装应用、支持卸载、搜索过滤、用户/系统应用分类
+- DNS 切换：一键切换 DNS 服务器，支持阿里、腾讯、百度、Google、Cloudflare、Quad9
+- DNS over HTTPS (DoH) 支持：自动配置 DoH 模板
+- 系统遥测与推广阻止：一键阻止 Windows 系统遥测进程
+- 当前 DNS 信息显示：网卡、主DNS、副DNS、DoH 地址与状态
+
+### Improvements
+- IFEO management: view, add, delete IFEO entries
+- APPX app management: view installed apps, uninstall support, search filter, user/system app categorization
+- DNS switching: one-click DNS server switch with Ali, Tencent, Baidu, Google, Cloudflare, Quad9 support
+- DNS over HTTPS (DoH) support: auto-configure DoH templates
+- System telemetry and promotion blocking: one-click block Windows telemetry processes
+- Current DNS info display: adapter, primary DNS, secondary DNS, DoH address and status
+
 ## v1.4.1
 
 ### 改进

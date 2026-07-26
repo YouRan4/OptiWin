@@ -93,3 +93,13 @@ func RebootSystem() bool                      { return false }
 func RebootToBios() bool                      { return false }
 func GetSystemInfo() string                   { return `{"os":"","build":"","cpu":"","ram":"","ipv4":"","ipv6":""}` }
 
+func ListAppxPackages() string                { return "[]" }
+func UninstallAppx(fullName string) bool      { return false }
+
+func ListIfeoEntries() string                 { return "[]" }
+func AddIfeoEntry(exeName, debugger string) bool { return false }
+func RemoveIfeoEntry(exeName string) bool     { return false }
+func GetRunningProcesses() string             { return "[]" }
+func SetDns(code string) bool                 { return false }
+func GetCurrentDns() string                   { return "[]" }
+

@@ -103,19 +103,19 @@ async function onCheckUpdate() {
 
     <div class="bottom-row">
       <div class="bottom-left">
-        <div class="info-card"><a href="https://github.com/YouRan4/OptiWin" target="_blank" class="github-link">
+        <div class="info-card"><span class="github-link" @click="BrowserOpenURL('https://github.com/YouRan4/OptiWin')">
           <svg width="20" height="20" viewBox="0 0 16 16" fill="currentColor">
             <path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38 0-.19-.01-.82-.01-1.49-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48 0 1.07-.01 1.93-.01 2.2 0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/>
           </svg><span>YouRan4/OptiWin</span>
-        </a></div>
+        </span></div>
         <div class="info-card">
           <div class="info-header">{{ i18n('info.basedOn') }}</div>
-          <a href="https://github.com/meetrevision/revision-tool" target="_blank" class="info-link">meetrevision/revision-tool</a>
+          <span class="info-link" @click="BrowserOpenURL('https://github.com/meetrevision/revision-tool')">meetrevision/revision-tool</span>
         </div>
         <div class="info-card">
           <div class="info-header">{{ i18n('info.license') }}</div>
           <p class="license-text">
-            {{ i18n('info.licenseDesc') }} <a href="https://www.gnu.org/licenses/gpl-3.0.html" target="_blank">GNU General Public License v3.0</a>
+            {{ i18n('info.licenseDesc') }} <span style="color:var(--accent); cursor:pointer" @click="BrowserOpenURL('https://www.gnu.org/licenses/gpl-3.0.html')">GNU General Public License v3.0</span>
           </p>
         </div>
         <div class="info-card lang-card">
@@ -174,15 +174,15 @@ h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
 .github-link {
   display: flex; align-items: center; gap: 10px;
   font-size: 15px; font-weight: 600; color: var(--accent);
-  text-decoration: none;
+  text-decoration: none; cursor: pointer;
 }
 .github-link:hover { color: var(--accent); }
 .info-header { font-size: 14px; font-weight: 600; margin-bottom: 6px; }
-.info-link { display: block; font-size: 13px; color: var(--accent); text-decoration: none; }
+.info-link { display: block; font-size: 13px; color: var(--accent); text-decoration: none; cursor: pointer; }
 .info-link:hover { text-decoration: underline; }
 .license-text { font-size: 13px; color: var(--text2); line-height: 1.6; }
-.license-text a { color: var(--accent); text-decoration: none; }
-.license-text a:hover { text-decoration: underline; }
+.license-text span { color: var(--accent); text-decoration: none; cursor: pointer; }
+.license-text span:hover { text-decoration: underline; }
 .lang-card { padding: 12px 14px; }
 .lang-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 

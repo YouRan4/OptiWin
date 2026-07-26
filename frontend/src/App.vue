@@ -3,7 +3,7 @@ import { useRouter, useRoute } from 'vue-router'
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NConfigProvider, darkTheme, zhCN, dateZhCN, enUS, dateEnUS, NNotificationProvider, NDialogProvider } from 'naive-ui'
-import { Home, Shield, Zap, Palette, Wrench, Download } from 'lucide-vue-next'
+import { Home, Shield, Zap, Palette, Wrench, Download, Package } from 'lucide-vue-next'
 
 const iconMap: Record<string, any> = {
   home: Home,
@@ -12,6 +12,7 @@ const iconMap: Record<string, any> = {
   personalization: Palette,
   utilities: Wrench,
   updates: Download,
+  appx: Package,
 }
 
 const router = useRouter()
@@ -49,6 +50,7 @@ const navItems = computed(() => [
   { path: '/personalization', name: 'personalization', label: i18n('nav.personalization') },
   { path: '/utilities', name: 'utilities', label: i18n('nav.utilities') },
   { path: '/updates', name: 'updates', label: i18n('nav.updates') },
+  { path: '/appx', name: 'appx', label: i18n('nav.appx') },
 ])
 
 const naiveLocale = computed(() => locale.value === 'zh' ? zhCN : enUS)

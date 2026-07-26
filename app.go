@@ -270,3 +270,15 @@ func (a *App) RestartExplorer() string {
 	}()
 	return "资源管理器已重启"
 }
+
+// --- Appx 应用管理 ---
+func (a *App) ListAppxPackages() string      { return services.ListAppxPackages() }
+func (a *App) UninstallAppx(name string) bool { return services.UninstallAppx(name) }
+
+// --- IFEO 镜像劫持管理 ---
+func (a *App) ListIfeoEntries() string                { return services.ListIfeoEntries() }
+func (a *App) AddIfeoEntry(exeName, debugger string) bool { return services.AddIfeoEntry(exeName, debugger) }
+func (a *App) RemoveIfeoEntry(exeName string) bool    { return services.RemoveIfeoEntry(exeName) }
+func (a *App) GetRunningProcesses() string            { return services.GetRunningProcesses() }
+func (a *App) SetDns(code string) bool                { return services.SetDns(code) }
+func (a *App) GetCurrentDns() string                  { return services.GetCurrentDns() }

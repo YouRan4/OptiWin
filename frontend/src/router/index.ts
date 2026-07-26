@@ -5,6 +5,7 @@ import PerformancePage from '../views/PerformancePage.vue'
 import PersonalizationPage from '../views/PersonalizationPage.vue'
 import UtilitiesPage from '../views/UtilitiesPage.vue'
 import UpdatesPage from '../views/UpdatesPage.vue'
+import AppxPage from '../views/AppxPage.vue'
 
 const routes = [
   { path: '/', name: 'home', component: HomePage },
@@ -13,6 +14,7 @@ const routes = [
   { path: '/personalization', name: 'personalization', component: PersonalizationPage },
   { path: '/utilities', name: 'utilities', component: UtilitiesPage },
   { path: '/updates', name: 'updates', component: UpdatesPage },
+  { path: '/appx', name: 'appx', component: AppxPage },
 ]
 
 export default createRouter({
