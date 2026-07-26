@@ -205,17 +205,16 @@ func GetRunningProcesses() string {
 type DnsConfig struct {
 	Primary   string `json:"primary"`
 	Secondary string `json:"secondary"`
-	Doh       string `json:"doh"`
 }
 
 var dnsMap = map[string]DnsConfig{
-	"isp":        {Primary: "", Secondary: "", Doh: ""},
-	"ali":        {Primary: "223.5.5.5", Secondary: "223.6.6.6", Doh: "https://dns.alidns.com/dns-query"},
-	"tencent":    {Primary: "119.29.29.29", Secondary: "119.28.28.28", Doh: "https://doh.pub/dns-query"},
-	"baidu":      {Primary: "180.76.76.76", Secondary: "180.76.76.76", Doh: ""},
-	"google":     {Primary: "8.8.8.8", Secondary: "8.8.4.4", Doh: "https://dns.google/dns-query"},
-	"cloudflare": {Primary: "1.1.1.1", Secondary: "1.0.0.1", Doh: "https://cloudflare-dns.com/dns-query"},
-	"quad9":      {Primary: "9.9.9.9", Secondary: "149.112.112.112", Doh: "https://dns1.quad9.net/dns-query"},
+	"isp":        {Primary: "", Secondary: ""},
+	"ali":        {Primary: "223.5.5.5", Secondary: "223.6.6.6"},
+	"tencent":    {Primary: "119.29.29.29", Secondary: "119.28.28.28"},
+	"baidu":      {Primary: "180.76.76.76", Secondary: "180.76.76.76"},
+	"google":     {Primary: "8.8.8.8", Secondary: "8.8.4.4"},
+	"cloudflare": {Primary: "1.1.1.1", Secondary: "1.0.0.1"},
+	"quad9":      {Primary: "9.9.9.9", Secondary: "149.112.112.112"},
 }
 
 func SetDns(code string) bool {
@@ -234,7 +233,6 @@ $activeAdapter = Get-NetAdapter | Where-Object {
 	if code == "isp" {
 		psScript := getActiveAdapter + `
 Set-DnsClientServerAddress -InterfaceIndex $activeAdapter.InterfaceIndex -ResetServerAddresses
-Remove-DnsClientDohServerAddress -ServerAddress * -ErrorAction SilentlyContinue
 Write-Output "OK"`
 		cmd := exec.Command("powershell.exe", "-NoProfile", "-Command", psScript)
 		utils.HideWindow(cmd)
@@ -246,31 +244,9 @@ Write-Output "OK"`
 	}
 
 	psScript := getActiveAdapter + fmt.Sprintf(`
-Set-DnsClientServerAddress -InterfaceIndex $activeAdapter.InterfaceIndex -ServerAddresses ('%s', '%s')`, config.Primary, config.Secondary)
-
-	if config.Doh != "" {
-		psScript += fmt.Sprintf(`
-$existing = Get-DnsClientDohServerAddress -ServerAddress '%s' -ErrorAction SilentlyContinue
-if (-not $existing) {
-    Add-DnsClientDohServerAddress -ServerAddress '%s' -DohTemplate '%s' -AllowFallbackToUdp $true -AutoUpgrade $true -ErrorAction SilentlyContinue
-} else {
-    Set-DnsClientDohServerAddress -ServerAddress '%s' -DohTemplate '%s' -AllowFallbackToUdp $true -AutoUpgrade $true -ErrorAction SilentlyContinue
-}`, config.Primary, config.Primary, config.Doh, config.Primary, config.Doh)
-
-		if config.Secondary != "" {
-			psScript += fmt.Sprintf(`
-$existingSec = Get-DnsClientDohServerAddress -ServerAddress '%s' -ErrorAction SilentlyContinue
-if (-not $existingSec) {
-    Add-DnsClientDohServerAddress -ServerAddress '%s' -DohTemplate '%s' -AllowFallbackToUdp $true -AutoUpgrade $true -ErrorAction SilentlyContinue
-} else {
-    Set-DnsClientDohServerAddress -ServerAddress '%s' -DohTemplate '%s' -AllowFallbackToUdp $true -AutoUpgrade $true -ErrorAction SilentlyContinue
-}`, config.Secondary, config.Secondary, config.Doh, config.Secondary, config.Doh)
-		}
-	}
-
-	psScript += `
+Set-DnsClientServerAddress -InterfaceIndex $activeAdapter.InterfaceIndex -ServerAddresses ('%s', '%s')
 Clear-DnsClientCache
-Write-Output "OK"`
+Write-Output "OK"`, config.Primary, config.Secondary)
 	cmd := exec.Command("powershell.exe", "-NoProfile", "-Command", psScript)
 	utils.HideWindow(cmd)
 	out, err := cmd.Output()
@@ -293,8 +269,6 @@ $activeAdapter = Get-NetAdapter | Where-Object {
 
 $primaryDns = ""
 $secondaryDns = ""
-$dohTemplate = ""
-$dohStatus = "未启用"
 
 if ($activeAdapter) {
     $dnsInfo = $activeAdapter | Get-DnsClientServerAddress -AddressFamily IPv4
@@ -302,25 +276,12 @@ if ($activeAdapter) {
     
     if ($servers.Count -gt 0) { $primaryDns = $servers[0] }
     if ($servers.Count -gt 1) { $secondaryDns = $servers[1] }
-
-    foreach ($serverIP in $servers) {
-        $dohConfig = Get-DnsClientDohServerAddress -ServerAddress $serverIP -ErrorAction SilentlyContinue
-        if ($dohConfig -and $dohConfig.DohTemplate) {
-            $dohTemplate = $dohConfig.DohTemplate
-            if ($dohConfig.AutoUpgrade -eq $true) {
-                $dohStatus = "已启用"
-                break
-            }
-        }
-    }
 }
 
 [PSCustomObject]@{
-    adapter      = if ($activeAdapter) { $activeAdapter.InterfaceDescription } else { "" }
-    primaryDns   = $primaryDns
+    adapter    = if ($activeAdapter) { $activeAdapter.InterfaceDescription } else { "" }
+    primaryDns = $primaryDns
     secondaryDns = $secondaryDns
-    doh          = $dohTemplate
-    dohStatus    = $dohStatus
 } | ConvertTo-Json -Compress
 `
 	cmd := exec.Command("powershell.exe", "-NoProfile", "-Command", psScript)

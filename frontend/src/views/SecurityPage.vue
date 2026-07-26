@@ -73,7 +73,7 @@ const dnsOptions = computed(() => [
 ])
 
 const selectedDns = ref('isp')
-const currentDnsInfo = ref({ adapter: '', primaryDns: '', secondaryDns: '', doh: '', dohStatus: '' })
+const currentDnsInfo = ref({ adapter: '', primaryDns: '', secondaryDns: '' })
 
 async function loadCurrentDns() {
   try {
@@ -82,12 +82,10 @@ async function loadCurrentDns() {
     currentDnsInfo.value = {
       adapter: parsed.adapter || '',
       primaryDns: parsed.primaryDns || '',
-      secondaryDns: parsed.secondaryDns || '',
-      doh: parsed.doh || '',
-      dohStatus: parsed.dohStatus || ''
+      secondaryDns: parsed.secondaryDns || ''
     }
   } catch {
-    currentDnsInfo.value = { adapter: '', primaryDns: '', secondaryDns: '', doh: '', dohStatus: '' }
+    currentDnsInfo.value = { adapter: '', primaryDns: '', secondaryDns: '' }
   }
 }
 
@@ -358,14 +356,6 @@ async function onTelemetryToggle(v: boolean) {
           <div class="row-label" style="display:flex; justify-content:space-between">
             <span>副 DNS</span>
             <span>{{ currentDnsInfo.secondaryDns || '未设置' }}</span>
-          </div>
-          <div class="row-label" style="display:flex; justify-content:space-between">
-            <span>DoH 地址</span>
-            <span>{{ currentDnsInfo.doh || '未配置' }}</span>
-          </div>
-          <div class="row-label" style="display:flex; justify-content:space-between">
-            <span>DoH 状态</span>
-            <span>{{ currentDnsInfo.dohStatus || '未启用' }}</span>
           </div>
         </div>
       </div>
