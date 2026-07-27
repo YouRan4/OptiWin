@@ -3,19 +3,25 @@
 package utils
 
 import (
-	_ "embed"
-	"os"
+	"OptiWin/tilauncher"
+	"encoding/base64"
+	"encoding/binary"
 	"os/exec"
-	"path/filepath"
 	"syscall"
 	"time"
+	"unicode/utf16"
 	"unsafe"
-
-	"github.com/google/uuid"
 )
 
-//go:embed PowerRun.exe
-var powerRunBin []byte
+// psEncode 将脚本编码为 PowerShell -EncodedCommand 所需的 Base64(UTF-16LE)
+func psEncode(script string) string {
+	encoded := utf16.Encode([]rune(script))
+	buf := make([]byte, len(encoded)*2)
+	for i, v := range encoded {
+		binary.LittleEndian.PutUint16(buf[i*2:], v)
+	}
+	return base64.StdEncoding.EncodeToString(buf)
+}
 
 func HideWindow(cmd *exec.Cmd) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{
@@ -46,22 +52,25 @@ func RestartExplorer() {
 }
 
 func Execute(data []byte) bool {
-	id := uuid.New()
-	scriptPath := filepath.Join(os.TempDir(), "optiwin", id.String()+".ps1")
-	os.WriteFile(scriptPath, data, 0644)
-	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath)
+	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
+		"-EncodedCommand", psEncode(string(data)))
 	HideWindow(cmd)
 	return cmd.Run() == nil
 }
 
 func SuperExecute(data []byte) bool {
-	id := uuid.New()
-	scriptPath := filepath.Join(os.TempDir(), "optiwin", id.String()+".ps1")
-	os.WriteFile(scriptPath, data, 0644)
-	prPath := filepath.Join(os.TempDir(), "optiwin", id.String()+".exe")
-	os.WriteFile(prPath, powerRunBin, 0755)
-	cmd := exec.Command(prPath, "/SW:0", "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath)
-	r := cmd.Run() == nil
-	time.Sleep(500 * time.Millisecond)
-	return r
+	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
+		"-EncodedCommand", psEncode(string(data)))
+	return tilauncher.RunAsTrustedInstaller(cmd) == nil
+}
+
+func ExecuteFile(scriptPath string) bool {
+	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath)
+	HideWindow(cmd)
+	return cmd.Run() == nil
+}
+
+func SuperExecuteFile(scriptPath string) bool {
+	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath)
+	return tilauncher.RunAsTrustedInstaller(cmd) == nil
 }

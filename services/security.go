@@ -110,6 +110,51 @@ func DisableMemoryIntegrity() bool {
 // -----IEFO
 const ifeoPath = `SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options`
 
+var ifeoBlockedExecutables = map[string]bool{
+	"winlogon.exe":    true,
+	"csrss.exe":       true,
+	"lsass.exe":       true,
+	"smss.exe":        true,
+	"services.exe":    true,
+	"svchost.exe":     true,
+	"explorer.exe":    true,
+	"dwm.exe":         true,
+	"wininit.exe":     true,
+	"fontdrvhost.exe": true,
+	"sihost.exe":      true,
+	"RuntimeBroker.exe": true,
+}
+
+func isValidIfeoExeName(name string) bool {
+	if name == "" || !strings.HasSuffix(strings.ToLower(name), ".exe") {
+		return false
+	}
+	if strings.ContainsAny(name, `\/:;*?<>|`) {
+		return false
+	}
+	if ifeoBlockedExecutables[strings.ToLower(name)] {
+		return false
+	}
+	return true
+}
+
+func isValidDebuggerPath(path string) bool {
+	if path == "" {
+		return true
+	}
+	lower := strings.ToLower(path)
+	if !strings.Contains(lower, `:\`) {
+		return false
+	}
+	if strings.HasPrefix(lower, `\\`) {
+		return false
+	}
+	if strings.Contains(lower, "..") {
+		return false
+	}
+	return true
+}
+
 type ifeoEntry struct {
 	Name       string `json:"name"`
 	Debugger   string `json:"debugger"`
@@ -155,7 +200,10 @@ func ListIfeoEntries() string {
 }
 
 func AddIfeoEntry(exeName, debugger string) bool {
-	if exeName == "" {
+	if !isValidIfeoExeName(exeName) {
+		return false
+	}
+	if !isValidDebuggerPath(debugger) {
 		return false
 	}
 

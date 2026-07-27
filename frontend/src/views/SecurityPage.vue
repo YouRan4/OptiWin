@@ -202,9 +202,28 @@ async function addIfeoEntry() {
     return
   }
 
+  if (/[\/:;*?<>|]/.test(exeName)) {
+    notify.create({ title: i18n('sec.notifyTitle'), description: i18n('sec.ifeoInvalidChars'), duration: 4000 })
+    return
+  }
+
   const exeNameLower = exeName.toLowerCase()
   if (blockedProcesses.some(p => exeNameLower.includes(p))) {
     notify.create({ title: i18n('sec.notifyTitle'), description: i18n('sec.ifeoBlockedProcess'), duration: 6000 })
+    return
+  }
+
+  const dbgLower = debuggerPath.toLowerCase()
+  if (!dbgLower.includes(':\\')) {
+    notify.create({ title: i18n('sec.notifyTitle'), description: i18n('sec.ifeoInvalidAbsPath'), duration: 4000 })
+    return
+  }
+  if (dbgLower.startsWith('\\\\')) {
+    notify.create({ title: i18n('sec.notifyTitle'), description: i18n('sec.ifeoUncPath'), duration: 4000 })
+    return
+  }
+  if (dbgLower.includes('..')) {
+    notify.create({ title: i18n('sec.notifyTitle'), description: i18n('sec.ifeoPathTraversal'), duration: 4000 })
     return
   }
 

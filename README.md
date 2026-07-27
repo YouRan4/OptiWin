@@ -24,7 +24,7 @@
 ## 功能
 
 - **首页** — 项目信息 + 系统信息（OS / CPU / 内存 / IP）
-- **安全** — 安全中心引擎禁用 / 服务禁用 / 恢复 / UAC / VBS / 内存完整性
+- **安全** — 安全中心引擎禁用 / 服务禁用 / 恢复 / UAC / VBS / 内存完整性 / IFEO 镜像劫持管理 / DNS 切换 / 系统遥测阻止
 - **性能** — 电源计划 / C-State / Superfetch / 内存压缩 / 全屏优化 / 窗口优化 / MPO / 着色器缓存 / Xbox 服务（Game Bar）
 - **个性化** — 通知 / 气球通知 / 边缘滑动 / 上下文菜单 / Explorer 主页和图库 / 快捷方式外观 / Win11 新版任务管理器开关
 - **实用工具** — 休眠 / 快速启动 / 照片查看器 / Edge 卸载 / WebView2 / 安全模式 / 进入 BIOS
@@ -34,7 +34,6 @@
 
 ## 鸣谢
 
-- **[PowerRun](https://www.sordum.org/81912/run-as-trustedinstaller-program-v1-6/)** — 用于以 TrustedInstaller 权限执行注册表操作
 - **[ionuttbara/windows-defender-remover](https://github.com/ionuttbara/windows-defender-remover)** — Defender 禁用方案参考
 - **[Lucide](https://lucide.dev/)** — 开源图标库
 
@@ -60,5 +59,5 @@ GOOS=windows GOARCH=amd64 CGO_ENABLED=1 CC=x86_64-w64-mingw32-gcc CXX=x86_64-w64
 ## 提交
 
 ```bash
-git add . && git commit -m "v1.1 - ..." && git push
+git add . && git commit -m "v1.x - ..." && git push
 ```

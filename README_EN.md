@@ -24,7 +24,7 @@
 ## Features
 
 - **Home** — Project info + System Info (OS / CPU / Memory / IP)
-- **Security** — Security Engine Disable / Service Disable / Restore / UAC / VBS / Memory Integrity
+- **Security** — Security Engine Disable / Service Disable / Restore / UAC / VBS / Memory Integrity / IFEO Management / DNS Switching / Telemetry Blocking
 - **Performance** — Power Plan / C-State / Superfetch / Memory Compression / Fullscreen Optimization / Windowed Optimization / MPO / Shader Cache / Xbox Services (Game Bar)
 - **Personalization** — Notifications / Balloon Notifications / Edge Swipe / Context Menu / Explorer Home & Gallery / Shortcut Appearance / Win11 New Task Manager Toggle
 - **Utilities** — Hibernate / Fast Startup / Photo Viewer / Uninstall Edge / WebView2 / Safe Mode / Enter BIOS
@@ -34,7 +34,6 @@
 
 ## Credits
 
-- **[PowerRun](https://www.sordum.org/81912/run-as-trustedinstaller-program-v1-6/)** — Used for executing registry operations with TrustedInstaller privileges
 - **[ionuttbara/windows-defender-remover](https://github.com/ionuttbara/windows-defender-remover)** — Reference for Defender disable approach
 - **[Lucide](https://lucide.dev/)** — Open source icon library
 
