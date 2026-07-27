@@ -13,40 +13,12 @@ import (
 	"OptiWin/utils"
 )
 
-//go:embed ps1/removeGameBar.ps1
-var removeGameBarPS1 []byte
-
-//go:embed ps1/restoreGameBar.ps1
-var restoreGameBarPS1 []byte
-
-//go:embed ps1/disableDefender.ps1
-var disableDefenderPS1 []byte
-
-//go:embed ps1/restoreDefender.ps1
-var restoreDefenderPS1 []byte
-
-//go:embed ps1/enableTaskManager.ps1
-var enableTaskManagerPS1 []byte
-
-//go:embed ps1/disableTaskManager.ps1
-var disableTaskManagerPS1 []byte
-
 type App struct {
 	ctx context.Context
 }
 
 func NewApp() *App {
 	return &App{}
-}
-
-func (a *App) startup(ctx context.Context) {
-	a.ctx = ctx
-	utils.RemoveGameBarScript = removeGameBarPS1
-	utils.RestoreGameBarScript = restoreGameBarPS1
-	utils.DisableDefenderScript = disableDefenderPS1
-	utils.RestoreDefenderScript = restoreDefenderPS1
-	utils.EnableTaskManagerScript = enableTaskManagerPS1
-	utils.DisableTaskManagerScript = disableTaskManagerPS1
 }
 
 func (a *App) GetCurrentVersion() string { return CurrentVersion }
@@ -225,7 +197,7 @@ func (a *App) GetRemoveShieldStatus() bool         { return services.GetRemoveSh
 func (a *App) SetRemoveShield(on bool) bool        { return services.SetRemoveShield(on) }
 
 // --- 任务管理器 ---
-func (a *App) GetOldTaskManagerStatus() bool { return services.GetOldTaskManagerStatus() }
+func (a *App) GetOldTaskManagerStatus() bool      { return services.GetOldTaskManagerStatus() }
 func (a *App) SetOldTaskManager(enable bool) bool { return services.SetOldTaskManager(enable) }
 
 // --- 休眠 ---
@@ -272,13 +244,15 @@ func (a *App) RestartExplorer() string {
 }
 
 // --- Appx 应用管理 ---
-func (a *App) ListAppxPackages() string      { return services.ListAppxPackages() }
+func (a *App) ListAppxPackages() string       { return services.ListAppxPackages() }
 func (a *App) UninstallAppx(name string) bool { return services.UninstallAppx(name) }
 
 // --- IFEO 镜像劫持管理 ---
-func (a *App) ListIfeoEntries() string                { return services.ListIfeoEntries() }
-func (a *App) AddIfeoEntry(exeName, debugger string) bool { return services.AddIfeoEntry(exeName, debugger) }
-func (a *App) RemoveIfeoEntry(exeName string) bool    { return services.RemoveIfeoEntry(exeName) }
-func (a *App) GetRunningProcesses() string            { return services.GetRunningProcesses() }
-func (a *App) SetDns(code string) bool                { return services.SetDns(code) }
-func (a *App) GetCurrentDns() string                  { return services.GetCurrentDns() }
+func (a *App) ListIfeoEntries() string { return services.ListIfeoEntries() }
+func (a *App) AddIfeoEntry(exeName, debugger string) bool {
+	return services.AddIfeoEntry(exeName, debugger)
+}
+func (a *App) RemoveIfeoEntry(exeName string) bool { return services.RemoveIfeoEntry(exeName) }
+func (a *App) GetRunningProcesses() string         { return services.GetRunningProcesses() }
+func (a *App) SetDns(code string) bool             { return services.SetDns(code) }
+func (a *App) GetCurrentDns() string               { return services.GetCurrentDns() }

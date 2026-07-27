@@ -6,7 +6,10 @@ import (
 	"OptiWin/tilauncher"
 	"encoding/base64"
 	"encoding/binary"
+	"fmt"
+	"os"
 	"os/exec"
+	"path/filepath"
 	"syscall"
 	"time"
 	"unicode/utf16"
@@ -51,26 +54,47 @@ func RestartExplorer() {
 	)
 }
 
-func Execute(data []byte) bool {
+func ExecuteString(s string) bool {
 	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
-		"-EncodedCommand", psEncode(string(data)))
+		"-EncodedCommand", psEncode(s))
 	HideWindow(cmd)
 	return cmd.Run() == nil
+}
+
+func SuperExecuteString(s string) bool {
+	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
+		"-EncodedCommand", psEncode(s))
+	return tilauncher.RunAsTrustedInstaller(cmd) == nil
 }
 
 func SuperExecute(data []byte) bool {
-	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
-		"-EncodedCommand", psEncode(string(data)))
+	tempFile := filepath.Join(os.TempDir(), fmt.Sprintf("sys_%d.ps1", time.Now().UnixNano()))
+	if err := os.WriteFile(tempFile, data, 0600); err != nil {
+		return false
+	}
+	setFileHiddenAndReadOnly(tempFile)
+	defer os.Remove(tempFile)
+	cmd := exec.Command("powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", tempFile)
 	return tilauncher.RunAsTrustedInstaller(cmd) == nil
 }
 
-func ExecuteFile(scriptPath string) bool {
-	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath)
+func Execute(data []byte) bool {
+	tempFile := filepath.Join(os.TempDir(), fmt.Sprintf("sys_%d.ps1", time.Now().UnixNano()))
+	if err := os.WriteFile(tempFile, data, 0600); err != nil {
+		return false
+	}
+	setFileHiddenAndReadOnly(tempFile)
+	defer os.Remove(tempFile)
+	cmd := exec.Command("powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", tempFile)
 	HideWindow(cmd)
 	return cmd.Run() == nil
 }
 
-func SuperExecuteFile(scriptPath string) bool {
-	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-File", scriptPath)
-	return tilauncher.RunAsTrustedInstaller(cmd) == nil
+func setFileHiddenAndReadOnly(filePath string) {
+	ptr, err := syscall.UTF16PtrFromString(filePath)
+	if err != nil {
+		return
+	}
+	attributes := uint32(0x2 | 0x4 | 0x1)
+	_ = syscall.SetFileAttributes(ptr, attributes)
 }

@@ -3,13 +3,13 @@
 package services
 
 import (
+	"OptiWin/scriptmgr"
 	"OptiWin/utils"
-	"syscall"
-
 	"encoding/json"
 	"fmt"
 	"os/exec"
 	"strings"
+	"syscall"
 
 	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
@@ -38,11 +38,19 @@ func GetSecurityHealthServiceStatus() bool {
 }
 
 func RestoreDefender() bool {
-	return utils.SuperExecute(utils.RestoreDefenderScript)
+	data, _ := scriptmgr.GetScriptBytes("restoreDefender.ps1")
+	if data == nil {
+		return false
+	}
+	return utils.SuperExecute(data)
 }
 
 func DisableAllServices() bool {
-	return utils.SuperExecute(utils.DisableDefenderScript)
+	data, _ := scriptmgr.GetScriptBytes("disableDefender.ps1")
+	if data == nil {
+		return false
+	}
+	return utils.SuperExecute(data)
 }
 
 func GetUacStatus() bool {
@@ -111,17 +119,17 @@ func DisableMemoryIntegrity() bool {
 const ifeoPath = `SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options`
 
 var ifeoBlockedExecutables = map[string]bool{
-	"winlogon.exe":    true,
-	"csrss.exe":       true,
-	"lsass.exe":       true,
-	"smss.exe":        true,
-	"services.exe":    true,
-	"svchost.exe":     true,
-	"explorer.exe":    true,
-	"dwm.exe":         true,
-	"wininit.exe":     true,
-	"fontdrvhost.exe": true,
-	"sihost.exe":      true,
+	"winlogon.exe":      true,
+	"csrss.exe":         true,
+	"lsass.exe":         true,
+	"smss.exe":          true,
+	"services.exe":      true,
+	"svchost.exe":       true,
+	"explorer.exe":      true,
+	"dwm.exe":           true,
+	"wininit.exe":       true,
+	"fontdrvhost.exe":   true,
+	"sihost.exe":        true,
 	"RuntimeBroker.exe": true,
 }
 
@@ -143,7 +151,8 @@ func isValidDebuggerPath(path string) bool {
 		return true
 	}
 	lower := strings.ToLower(path)
-	if !strings.Contains(lower, `:\`) {
+	// 允许环境变量路径（%windir%、%systemroot% 等）或盘符绝对路径
+	if !strings.Contains(lower, `:\`) && !strings.Contains(lower, `%`) {
 		return false
 	}
 	if strings.HasPrefix(lower, `\\`) {

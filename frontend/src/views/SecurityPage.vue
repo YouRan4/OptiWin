@@ -214,7 +214,7 @@ async function addIfeoEntry() {
   }
 
   const dbgLower = debuggerPath.toLowerCase()
-  if (!dbgLower.includes(':\\')) {
+  if (!dbgLower.includes(':\\') && !dbgLower.includes('%')) {
     notify.create({ title: i18n('sec.notifyTitle'), description: i18n('sec.ifeoInvalidAbsPath'), duration: 4000 })
     return
   }

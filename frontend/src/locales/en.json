@@ -50,7 +50,7 @@
     "ifeoBlockedProcess": "Modifying system core processes is not allowed",
     "ifeoEmptyInput": "Executable name and debugger path cannot be empty",
     "ifeoInvalidChars": "Executable name contains invalid characters (path separators not allowed)",
-    "ifeoInvalidAbsPath": "Debugger path must be an absolute path",
+    "ifeoInvalidAbsPath": "Debugger path must be an absolute path or use environment variables (e.g. %windir%)",
     "ifeoUncPath": "Network UNC paths are not allowed",
     "ifeoPathTraversal": "Path traversal (..) is not allowed",
     "privacy":"Privacy",

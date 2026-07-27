@@ -206,16 +206,18 @@ func GetOldTaskManagerStatus() bool {
 }
 
 func SetOldTaskManager(enable bool) bool {
-	var script []byte
+	var cmd string
 	if enable {
-		script = utils.EnableTaskManagerScript
+		cmd = `Rename-Item -Path "C:\Windows\SystemResources\Windows.UI.TaskManager.bak" -NewName "Windows.UI.TaskManager" -Force`
 	} else {
-		script = utils.DisableTaskManagerScript
+		cmd = `Rename-Item -Path "C:\Windows\SystemResources\Windows.UI.TaskManager" -NewName "Windows.UI.TaskManager.bak" -Force`
 	}
 
-	if !utils.SuperExecute(script) {
+	if !utils.SuperExecuteString(cmd) {
 		return false
 	}
+
+	defer utils.RestartExplorer()
 
 	source := taskManagerPath
 	if enable {

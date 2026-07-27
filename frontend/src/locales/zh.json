@@ -50,7 +50,7 @@
     "ifeoBlockedProcess": "禁止修改系统核心进程",
     "ifeoEmptyInput": "可执行文件名和调试器路径不能为空",
     "ifeoInvalidChars": "可执行文件名包含非法字符（不允许路径分隔符）",
-    "ifeoInvalidAbsPath": "调试器路径必须是绝对路径",
+    "ifeoInvalidAbsPath": "调试器路径必须是绝对路径或环境变量路径（如 %windir%）",
     "ifeoUncPath": "不允许使用网络 UNC 路径",
     "ifeoPathTraversal": "不允许路径穿越（..）",
     "privacy":"隐私",
