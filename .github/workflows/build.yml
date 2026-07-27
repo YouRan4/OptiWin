@@ -31,9 +31,6 @@ jobs:
       - name: Install UPX
         run: choco install upx -y
 
-      - name: Compress PowerRun
-        run: upx --best utils/PowerRun.exe
-
       - name: Build frontend
         working-directory: frontend
         run: npm install && npm run build
