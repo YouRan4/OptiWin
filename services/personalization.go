@@ -138,7 +138,7 @@ func SetExplorerGallery(on bool) bool {
 func GetRemoveShortcutArrowStatus() bool {
 	v, _, err := utils.RegReadString(registry.LOCAL_MACHINE,
 		`SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Shell Icons`, "29")
-	return err == nil && v != ""
+	return err == nil && v == ""
 }
 
 func SetRemoveShortcutArrow(on bool) bool {
