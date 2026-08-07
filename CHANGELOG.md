@@ -2,6 +2,24 @@
 
 ---
 
+## v1.6.0
+
+### 移除
+- **Windows 安全中心(Defender)禁用功能整体下线**：移除安全模式全自动禁用/恢复方案（`PrepareDefenderDisable` / `PrepareDefenderRestore` / `SafeModeApply`），该功能依赖文件备份且可靠性不足
+- 删除 scriptmgr 内嵌脚本包及 disableDefender/restoreDefender PowerShell 脚本
+- 清理前端安全中心开关卡片、wailsjs 绑定及对应多语言文案
+
+### 修复
+- **RestartExplorer 重写**：采用 Dism++ 同款消息驱动方案（`PostMessage WM_EXITEXPLORER` 优雅退出 → 等待进程结束 → ShellExecute 重启），彻底移除 `taskkill` 调用，避免被安全软件行为拦截
+- **UninstallAppx 增强**：增加 `Remove-AppxPackage -AllUsers` 与 `Remove-AppxProvisionedPackage -Online`，系统预装应用可彻底移除且不再随更新恢复
+- 个性化设置模块多项修复：Edge 滑动手势状态判断、通知模式降级、快捷方式图标/盾牌常量修正、TaskManager 轮询超时调整
+- 注册表 API 增加 `*E` 变体（返回 error），供需要错误传播的场景使用
+
+### 其他
+- `build.sh` 改为本地构建脚本，不再纳入版本库管理
+
+---
+
 ## v1.5.2
 
 ### 修复
