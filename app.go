@@ -7,7 +7,6 @@ import (
 	"fmt"
 	"io"
 	"net/http"
-	"os/exec"
 
 	"OptiWin/services"
 	"OptiWin/utils"
@@ -146,11 +145,6 @@ func (a *App) ClearShaderCache() string { return services.ClearShaderCache() }
 func (a *App) RemoveGameBar() bool  { return services.RemoveGameBar() }
 func (a *App) RestoreGameBar() bool { return services.RestoreGameBar() }
 
-// --- Defender ---
-func (a *App) GetSecurityHealthServiceStatus() bool { return services.GetSecurityHealthServiceStatus() }
-func (a *App) RestoreDefender() bool                { return services.RestoreDefender() }
-func (a *App) DisableAllServices() bool             { return services.DisableAllServices() }
-
 // --- UAC ---
 func (a *App) GetUacStatus() bool { return services.GetUacStatus() }
 func (a *App) EnableUac() bool    { return services.EnableUac() }
@@ -232,14 +226,7 @@ func (a *App) GetSystemAccentColor() string {
 
 // --- 重启资源管理器 ---
 func (a *App) RestartExplorer() string {
-	cmd := exec.Command("taskkill", "/f", "/im", "explorer.exe")
-	utils.HideWindow(cmd)
-	cmd.Run()
-	go func() {
-		cmd2 := exec.Command("explorer.exe")
-		utils.HideWindow(cmd2)
-		cmd2.Start()
-	}()
+	utils.RestartExplorer()
 	return "资源管理器已重启"
 }
 

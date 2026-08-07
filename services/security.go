@@ -3,55 +3,14 @@
 package services
 
 import (
-	"OptiWin/scriptmgr"
 	"OptiWin/utils"
 	"encoding/json"
 	"fmt"
 	"os/exec"
 	"strings"
-	"syscall"
 
-	"golang.org/x/sys/windows"
 	"golang.org/x/sys/windows/registry"
 )
-
-func GetSecurityHealthServiceStatus() bool {
-	mgr, err := windows.OpenSCManager(nil, nil, windows.SC_MANAGER_CONNECT)
-	if err != nil {
-		return false
-	}
-	defer windows.CloseServiceHandle(mgr)
-
-	svcName, _ := syscall.UTF16PtrFromString("SecurityHealthService")
-	svc, err := windows.OpenService(mgr, svcName, windows.SERVICE_QUERY_STATUS)
-	if err != nil {
-		return false
-	}
-	defer windows.CloseServiceHandle(svc)
-
-	var status windows.SERVICE_STATUS
-	err = windows.QueryServiceStatus(svc, &status)
-	if err != nil {
-		return false
-	}
-	return status.CurrentState == windows.SERVICE_RUNNING
-}
-
-func RestoreDefender() bool {
-	data, _ := scriptmgr.GetScriptBytes("restoreDefender.ps1")
-	if data == nil {
-		return false
-	}
-	return utils.SuperExecute(data)
-}
-
-func DisableAllServices() bool {
-	data, _ := scriptmgr.GetScriptBytes("disableDefender.ps1")
-	if data == nil {
-		return false
-	}
-	return utils.SuperExecute(data)
-}
 
 func GetUacStatus() bool {
 	v, err := utils.RegReadDWord(registry.LOCAL_MACHINE,

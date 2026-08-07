@@ -42,9 +42,6 @@ func ClearShaderCache() string                { return "仅支持 Windows" }
 func RemoveGameBar() bool                     { return false }
 func RestoreGameBar() bool                    { return false }
 
-func GetSecurityHealthServiceStatus() bool    { return true }
-func RestoreDefender() bool                   { return false }
-func DisableAllServices() bool                { return false }
 func GetUacStatus() bool                      { return true }
 func EnableUac() bool                         { return false }
 func DisableUac() bool                        { return false }
