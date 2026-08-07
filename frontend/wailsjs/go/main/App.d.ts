@@ -7,8 +7,6 @@ export function CheckUpdate():Promise<string>;
 
 export function ClearShaderCache():Promise<string>;
 
-export function DisableAllServices():Promise<boolean>;
-
 export function DisableCState():Promise<boolean>;
 
 export function DisableDriverUpdates():Promise<boolean>;
@@ -121,8 +119,6 @@ export function GetRemoveShortcutTextStatus():Promise<boolean>;
 
 export function GetRunningProcesses():Promise<string>;
 
-export function GetSecurityHealthServiceStatus():Promise<boolean>;
-
 export function GetSuperfetchStatus():Promise<boolean>;
 
 export function GetSystemAccentColor():Promise<string>;
@@ -158,8 +154,6 @@ export function RemoveGameBar():Promise<boolean>;
 export function RemoveIfeoEntry(arg1:string):Promise<boolean>;
 
 export function RestartExplorer():Promise<string>;
-
-export function RestoreDefender():Promise<boolean>;
 
 export function RestoreGameBar():Promise<boolean>;
 

@@ -1,5 +1,8 @@
 {
-  "lang": { "zh": "中文", "en": "English" },
+  "lang": {
+    "zh": "中文",
+    "en": "English"
+  },
   "home": {
     "noUpdateNotes": "暂无更新说明",
     "newVersion": "发现新版本",
@@ -15,8 +18,6 @@
   },
   "sec": {
     "notifyTitle": "安全中心",
-    "restartRequired": "需要重启系统才能完全生效",
-    "defenderTitle": "防病毒与威胁软件",
     "systemProtection": "系统防护",
     "uac": "UAC",
     "uacDesc": "用户帐户控制，限制应用对系统更改的权限",
@@ -25,8 +26,6 @@
     "memIntegrity": "内存完整性",
     "memIntegrityDesc": "核心隔离功能，防止恶意代码注入高安全性进程",
     "operating": "执行中...",
-    "disableAll": "Windows 安全中心",
-    "disableAllDesc": "Windows安全中心将保护您的电脑。由于持续在后台运行，这将对性能产生影响。",
     "ifeoTitle": "IFEO 映像劫持管理",
     "ifeoDesc": "管理 Image File Execution Options，控制可执行文件的调试器重定向",
     "ifeoSearch": "搜索可执行文件...",
@@ -53,7 +52,7 @@
     "ifeoInvalidAbsPath": "调试器路径必须是绝对路径或环境变量路径（如 %windir%）",
     "ifeoUncPath": "不允许使用网络 UNC 路径",
     "ifeoPathTraversal": "不允许路径穿越（..）",
-    "privacy":"隐私",
+    "privacy": "隐私",
     "telemetryTitle": "禁用系统遥测与推广",
     "telemetryDesc": "通过 IFEO 阻止 Windows 系统遥测和推广进程",
     "telemetryEnabled": "已启用遥测阻止",

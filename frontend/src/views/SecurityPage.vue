@@ -2,9 +2,8 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NSwitch, NButton, NModal, NInput, NSelect } from 'naive-ui'
-import { Shield, Lock, Server, HardDrive, Search, RefreshCw, Trash2, Plus, Bug, AlertTriangle } from 'lucide-vue-next'
+import { Lock, Server, HardDrive, Search, RefreshCw, Trash2, Plus, Bug, AlertTriangle } from 'lucide-vue-next'
 import {
-  GetSecurityHealthServiceStatus, RestoreDefender, DisableAllServices,
   GetUacStatus, EnableUac, DisableUac,
   GetVbsStatus, EnableVbs, DisableVbs,
   GetMemoryIntegrityStatus, EnableMemoryIntegrity, DisableMemoryIntegrity,
@@ -18,7 +17,6 @@ const notify = useNotify()
 
 const showModal = ref(false)
 const modalText = ref('')
-const serviceDisabled = ref(false)
 
 const uac = ref(false)
 const vbs = ref(false)
@@ -124,27 +122,12 @@ const filteredIfeo = computed(() => {
 })
 
 onMounted(async () => {
-  serviceDisabled.value = await GetSecurityHealthServiceStatus()
   uac.value = await GetUacStatus()
   vbs.value = await GetVbsStatus()
   memIntegrity.value = await GetMemoryIntegrityStatus()
   await loadIfeoEntries()
   await loadCurrentDns()
 })
-
-async function onServiceToggle(v: boolean) {
-  modalText.value = i18n('sec.operating')
-  showModal.value = true
-
-  try {
-    if (v) await RestoreDefender(); else await DisableAllServices()
-    notify.create({ title: i18n('sec.notifyTitle'), description: i18n('sec.restartRequired'), duration: 6000 })
-  } catch (e: any) {
-    notify.create({ title: i18n('sec.notifyTitle'), description: e?.message || 'Error', duration: 6000 })
-  } finally {
-    showModal.value = false
-  }
-}
 
 async function onUac(v: boolean) {
   if (v) await EnableUac(); else await DisableUac()
@@ -284,20 +267,6 @@ async function onTelemetryToggle(v: boolean) {
 <template>
   <div class="page">
     <WaitModal :show="showModal" :text="modalText" />
-    <div class="setting-card">
-      <div class="setting-card-header setting-card-header--flat">
-        <span class="header-title">{{ i18n('sec.defenderTitle') }}</span>
-      </div>
-      <div class="setting-row">
-        <Shield :size="18" class="row-icon" />
-        <div>
-          <div class="row-label">{{ i18n('sec.disableAll') }}</div>
-          <div class="row-desc">{{ i18n('sec.disableAllDesc') }}</div>
-        </div>
-        <n-switch v-model:value="serviceDisabled" :disabled="showModal" @update:value="onServiceToggle" />
-      </div>
-    </div>
-
     <div class="setting-card">
       <div class="setting-card-header setting-card-header--flat">
         <span class="header-title">{{ i18n('sec.systemProtection') }}</span>

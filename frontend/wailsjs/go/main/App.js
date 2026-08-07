@@ -14,10 +14,6 @@ export function ClearShaderCache() {
   return window['go']['main']['App']['ClearShaderCache']();
 }
 
-export function DisableAllServices() {
-  return window['go']['main']['App']['DisableAllServices']();
-}
-
 export function DisableCState() {
   return window['go']['main']['App']['DisableCState']();
 }
@@ -242,10 +238,6 @@ export function GetRunningProcesses() {
   return window['go']['main']['App']['GetRunningProcesses']();
 }
 
-export function GetSecurityHealthServiceStatus() {
-  return window['go']['main']['App']['GetSecurityHealthServiceStatus']();
-}
-
 export function GetSuperfetchStatus() {
   return window['go']['main']['App']['GetSuperfetchStatus']();
 }
@@ -316,10 +308,6 @@ export function RemoveIfeoEntry(arg1) {
 
 export function RestartExplorer() {
   return window['go']['main']['App']['RestartExplorer']();
-}
-
-export function RestoreDefender() {
-  return window['go']['main']['App']['RestoreDefender']();
 }
 
 export function RestoreGameBar() {
