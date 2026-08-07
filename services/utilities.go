@@ -1,15 +1,17 @@
 //go:build windows
+
 package services
 
 import (
+	"OptiWin/utils"
 	"fmt"
+	"golang.org/x/sys/windows/registry"
 	"io"
 	"os"
 	"os/exec"
+	"path/filepath"
 	"strings"
 	"unsafe"
-	"golang.org/x/sys/windows/registry"
-	"OptiWin/utils"
 )
 
 func GetHibernateStatus() bool {
@@ -100,20 +102,41 @@ func DisablePhotoViewer() bool {
 }
 
 func UninstallEdge() string {
+	// 结束 Edge 进程，避免文件占用导致删除失败
 	exec.Command("taskkill", "/f", "/im", "msedge.exe").Run()
+	exec.Command("taskkill", "/f", "/im", "msedgewebview2.exe").Run()
 
+	// 优先调用官方卸载器（24H2 起命令行调用可能被拒绝，失败不影响后续清理）
+	matches, _ := filepath.Glob(`C:\Program Files (x86)\Microsoft\Edge\Application\*\Installer\setup.exe`)
+	for _, setup := range matches {
+		utils.RunHide(setup, "--uninstall", "--system-level", "--force-uninstall")
+	}
+
+	// 阻止 Edge 复活（仅针对 Edge，不动 WebView2 的更新通道）
+	// DoNotUpdateToEdgeWithChromium: 阻止 Windows Update 重新安装 Edge（官方支持）
+	// Install/Update{GUID}: 阻止 EdgeUpdate 自动安装/更新 Edge，WebView2 的 GUID 不受影响
+	utils.RegSetDWordE(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\EdgeUpdate`, "DoNotUpdateToEdgeWithChromium", 1)
+	utils.RegSetDWordE(registry.LOCAL_MACHINE, `SOFTWARE\Policies\Microsoft\EdgeUpdate`, `Install{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}`, 0)
+	utils.RegSetDWordE(registry.LOCAL_MACHINE, `SOFTWARE\Policies\Microsoft\EdgeUpdate`, `Update{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}`, 0)
+
+	// 清理 Edge 程序与注册表残留
 	os.RemoveAll(`C:\Program Files (x86)\Microsoft\Edge\`)
 	os.RemoveAll(`C:\Program Files\Microsoft\Edge\`)
+	utils.RegDeleteKeyE(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Edge`)
+	utils.RegDeleteKeyE(registry.CURRENT_USER, `SOFTWARE\Microsoft\Edge`)
+	utils.RegDeleteKeyE(registry.LOCAL_MACHINE, `SOFTWARE\Policies\Microsoft\Edge`)
+	// 删除 EdgeUpdate 中 Edge 的注册记录（WebView2 的 {F3017226-...} 保留）
+	utils.RegDeleteKeyE(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\EdgeUpdate\Clients\{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}`)
+	utils.RegDeleteKeyE(registry.LOCAL_MACHINE, `SOFTWARE\WOW6432Node\Microsoft\EdgeUpdate\Clients\{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}`)
 
-	utils.RunHide("reg", "delete", `HKLM\SOFTWARE\Microsoft\Edge`, "/f")
-	utils.RunHide("reg", "delete", `HKCU\SOFTWARE\Microsoft\Edge`, "/f")
-
-	os.Remove(os.Getenv("PUBLIC") + `\Desktop\Microsoft Edge.lnk`)
-	os.Remove(os.Getenv("APPDATA") + `\Microsoft\Windows\Start Menu\Programs\Microsoft Edge.lnk`)
+	// 清理用户数据与快捷方式
 	os.RemoveAll(os.Getenv("LOCALAPPDATA") + `\Microsoft\Edge\`)
 	os.RemoveAll(os.Getenv("APPDATA") + `\Microsoft\Edge\`)
+	os.Remove(os.Getenv("PUBLIC") + `\Desktop\Microsoft Edge.lnk`)
+	os.Remove(os.Getenv("PROGRAMDATA") + `\Microsoft\Windows\Start Menu\Programs\Microsoft Edge.lnk`)
+	os.Remove(os.Getenv("APPDATA") + `\Microsoft\Windows\Start Menu\Programs\Microsoft Edge.lnk`)
 
-	return "Edge 已卸载（保留 WebView2）"
+	return "Edge 已卸载（已阻止重新安装，WebView2 已保留）"
 }
 
 func GetWebView2Version() string {

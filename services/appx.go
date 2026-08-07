@@ -95,8 +95,28 @@ Get-AppxPackage | ForEach-Object {
 }
 
 func UninstallAppx(fullName string) bool {
-	psScript := "Remove-AppxPackage -Package '" + strings.ReplaceAll(fullName, "'", "''") + "'"
-	cmd := exec.Command("powershell.exe", "-NoProfile", "-Command", psScript)
+	escaped := strings.ReplaceAll(fullName, "'", "''")
+	psScript := `
+$ErrorActionPreference = 'SilentlyContinue'
+$fullName = '` + escaped + `'
+$name = ($fullName -split '_')[0]
+
+# 1. 结束该应用相关进程
+Get-Process | Where-Object { $_.Name -like "*$name*" } | Stop-Process -Force
+
+# 2. 移除当前用户及所有用户的包
+Remove-AppxPackage -Package $fullName -Confirm:$false
+Remove-AppxPackage -Package $fullName -AllUsers -Confirm:$false
+
+# 3. 移除系统预置包（防止重装/新用户再次出现）
+Get-AppxProvisionedPackage -Online | Where-Object { $_.PackageName -like "*$name*" } |
+    Remove-AppxProvisionedPackage -Online
+
+# 4. 校验是否已彻底卸载
+if (Get-AppxPackage | Where-Object { $_.PackageFullName -eq $fullName }) { exit 1 }
+exit 0
+`
+	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", psScript)
 	utils.HideWindow(cmd)
 	return cmd.Run() == nil
 }

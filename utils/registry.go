@@ -3,6 +3,7 @@
 package utils
 
 import (
+	"errors"
 	"fmt"
 
 	"golang.org/x/sys/windows/registry"
@@ -28,27 +29,67 @@ func RegReadString(key registry.Key, path, name string) (string, uint32, error) 
 }
 
 func RegWriteString(key registry.Key, path, name, value string) bool {
-	k, _, _ := registry.CreateKey(key, path, registry.SET_VALUE)
+	return RegWriteStringE(key, path, name, value) == nil
+}
+
+func RegWriteStringE(key registry.Key, path, name, value string) error {
+	k, _, err := registry.CreateKey(key, path, registry.SET_VALUE)
+	if err != nil {
+		return err
+	}
 	defer k.Close()
-	return k.SetStringValue(name, value) == nil
+	return k.SetStringValue(name, value)
 }
 
 func RegDeleteValue(key registry.Key, path, name string) {
+	_ = RegDeleteValueE(key, path, name)
+}
+
+func RegDeleteValueE(key registry.Key, path, name string) error {
 	k, err := registry.OpenKey(key, path, registry.SET_VALUE)
 	if err != nil {
-		return
+		return err
 	}
 	defer k.Close()
-	k.DeleteValue(name)
+	return k.DeleteValue(name)
+}
+
+// RegDeleteKeyE 递归删除注册表键（含所有子键），键不存在视为成功
+func RegDeleteKeyE(hive registry.Key, path string) error {
+	k, err := registry.OpenKey(hive, path, registry.ENUMERATE_SUB_KEYS)
+	if err != nil {
+		if errors.Is(err, registry.ErrNotExist) {
+			return nil
+		}
+		return err
+	}
+	subKeys, err := k.ReadSubKeyNames(-1)
+	k.Close()
+	if err != nil {
+		return err
+	}
+	for _, sub := range subKeys {
+		if err := RegDeleteKeyE(hive, path+`\`+sub); err != nil {
+			return err
+		}
+	}
+	return registry.DeleteKey(hive, path)
 }
 
 func RegSetDWord(key registry.Key, path, name string, value uint32) {
+	_ = RegSetDWordE(key, path, name, value)
+}
+
+func RegSetDWordE(key registry.Key, path, name string, value uint32) error {
 	k, err := registry.OpenKey(key, path, registry.SET_VALUE)
 	if err != nil {
-		k, _, _ = registry.CreateKey(key, path, registry.SET_VALUE)
+		k, _, err = registry.CreateKey(key, path, registry.SET_VALUE)
+		if err != nil {
+			return err
+		}
 	}
 	defer k.Close()
-	k.SetDWordValue(name, value)
+	return k.SetDWordValue(name, value)
 }
 
 func RegSetDWordBool(key registry.Key, path, name string, value uint32) bool {

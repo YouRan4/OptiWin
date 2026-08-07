@@ -39,18 +39,57 @@ func RunHide(name string, args ...string) {
 	cmd.Run()
 }
 
-func RestartExplorer() {
-	exec.Command("taskkill", "/f", "/im", "explorer.exe").Run()
-	time.Sleep(1500 * time.Millisecond)
+var (
+	user32   = syscall.NewLazyDLL("user32.dll")
+	shell32  = syscall.NewLazyDLL("shell32.dll")
+	kernel32 = syscall.NewLazyDLL("kernel32.dll")
+)
 
-	dll := syscall.MustLoadDLL("shell32.dll")
-	proc := dll.MustFindProc("ShellExecuteW")
-	proc.Call(
-		0,
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("open"))),
-		uintptr(unsafe.Pointer(syscall.StringToUTF16Ptr("explorer.exe"))),
-		0, 0,
-		5,
+const (
+	wmExitExplorer = 0x5B4 // WM_USER + 436：explorer 内部优雅退出消息
+	synchronize    = 0x00100000
+	explorerWait   = 3 * time.Second
+)
+
+func shellTrayHwnd() uintptr {
+	className, _ := syscall.UTF16PtrFromString("Shell_TrayWnd")
+	hwnd, _, _ := user32.NewProc("FindWindowW").Call(
+		uintptr(unsafe.Pointer(className)), 0,
+	)
+	return hwnd
+}
+
+func waitProcessExit(pid uint32, timeout time.Duration) bool {
+	hProcess, _, _ := kernel32.NewProc("OpenProcess").Call(synchronize, 0, uintptr(pid))
+	if hProcess == 0 {
+		return true
+	}
+	defer kernel32.NewProc("CloseHandle").Call(hProcess)
+	wait, _, _ := kernel32.NewProc("WaitForSingleObject").Call(hProcess, uintptr(timeout.Milliseconds()))
+	return wait == 0 // WAIT_OBJECT_0 = 进程已退出
+}
+
+func RestartExplorer() {
+	hwnd := shellTrayHwnd()
+	var pid uint32
+	user32.NewProc("GetWindowThreadProcessId").Call(
+		hwnd, uintptr(unsafe.Pointer(&pid)),
+	)
+	if pid == 0 {
+		return
+	}
+
+	user32.NewProc("PostMessageW").Call(hwnd, wmExitExplorer, 0, 0)
+	waitProcessExit(pid, explorerWait)
+	startExplorer()
+}
+
+func startExplorer() {
+	explorer, _ := syscall.UTF16PtrFromString("explorer.exe")
+	open, _ := syscall.UTF16PtrFromString("open")
+	shell32.NewProc("ShellExecuteW").Call(
+		0, uintptr(unsafe.Pointer(open)),
+		uintptr(unsafe.Pointer(explorer)), 0, 0, 5,
 	)
 }
 
@@ -76,6 +115,17 @@ func SuperExecute(data []byte) bool {
 	defer os.Remove(tempFile)
 	cmd := exec.Command("powershell.exe", "-NoProfile", "-NonInteractive", "-ExecutionPolicy", "Bypass", "-File", tempFile)
 	return tilauncher.RunAsTrustedInstaller(cmd) == nil
+}
+
+// SuperExec 以 TrustedInstaller 令牌执行任意命令
+func SuperExec(name string, args ...string) bool {
+	cmd := exec.Command(name, args...)
+	return tilauncher.RunAsTrustedInstaller(cmd) == nil
+}
+
+// SuperReg 以 TrustedInstaller 令牌执行 reg.exe 命令
+func SuperReg(args ...string) bool {
+	return SuperExec("reg.exe", args...)
 }
 
 func Execute(data []byte) bool {
