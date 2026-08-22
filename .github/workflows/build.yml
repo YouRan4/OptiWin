@@ -62,3 +62,43 @@ jobs:
         with:
           files: OptiWin-${{ github.ref_name }}.exe
           generate_release_notes: true
+
+  sync-site:
+    needs: build
+    if: startsWith(github.ref, 'refs/tags/v')
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout OptiWin
+        uses: actions/checkout@v4
+        with:
+          path: optiwin
+
+      - name: Checkout site repo
+        uses: actions/checkout@v4
+        with:
+          repository: YouRan4/YouRan4.github.io
+          token: ${{ secrets.SITE_PAT }}
+          path: site
+
+      - name: Download exe artifact
+        uses: actions/download-artifact@v4
+        with:
+          name: OptiWin-${{ github.ref_name }}
+          path: dist
+
+      - name: Sync release page
+        run: |
+          python3 optiwin/scripts/sync_release_page.py \
+            --post site/src/blog/optiwin-release/index.mdx \
+            --asset-dir site/public/asset \
+            --exe dist/OptiWin-${{ github.ref_name }}.exe \
+            --version ${{ github.ref_name }}
+
+      - name: Commit & push
+        working-directory: site
+        run: |
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          git commit -m "release: sync OptiWin ${{ github.ref_name }}"
+          git push
