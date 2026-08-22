@@ -12,6 +12,17 @@
   A Windows system optimization toolkit
 </p>
 
+## Design Philosophy
+
+> **Safe, Reversible, Restrained** — this is the starting point for every feature in OptiWin.
+
+- **Every change can be undone**: each operation ships with a corresponding restore function. No destructive modifications, no system component removal, never leave an irreversible state.
+- **No aggressive operations**: high-risk techniques such as forced termination, deleting system files, or hijacking critical drivers are avoided. System stability and data safety always come before "extreme optimization".
+- **No full disable of Windows Defender**: Defender's real-time protection and core services are protected by Windows' own Tamper Protection and kernel driver protection. Forcefully disabling them requires destructive means, which contradicts the project philosophy.
+- **Explicitly avoid breaking the security chain**: for example, the ELAM boot driver (WdBoot) — on laptops with biometric authentication (fingerprint/face), disabling it causes Windows Hello to fail. OptiWin keeps such trust-chain components untouched.
+
+> In one sentence: **You can confidently adjust every setting, because every setting can be reverted to its original state.**
+
 ## Screenshot
 
 ![home](docs/home.png)
@@ -24,22 +35,20 @@
 ## Features
 
 - **Home** — Project info + System Info (OS / CPU / Memory / IP)
-- **Security** — Security Engine Disable / Service Disable / Restore / UAC / VBS / Memory Integrity / IFEO Management / DNS Switching / Telemetry Blocking
+- **Security** — Defender Real-time Protection Management / UAC / VBS / Memory Integrity / IFEO Management / DNS Switching / Telemetry Blocking
 - **Performance** — Power Plan / C-State / Superfetch / Memory Compression / Fullscreen Optimization / Windowed Optimization / MPO / Shader Cache / Xbox Services (Game Bar)
-- **Personalization** — Notifications / Balloon Notifications / Edge Swipe / Context Menu / Explorer Home & Gallery / Shortcut Appearance / Win11 New Task Manager Toggle
-- **Utilities** — Hibernate / Fast Startup / Photo Viewer / Uninstall Edge / WebView2 / Safe Mode / Enter BIOS
-- **Updates** — Certificate Update / KGL Update / Pause Updates / Hide Update Page / Driver Update Policy / Update Channel
-
-## Based on [meetrevision/revision-tool](https://github.com/meetrevision/revision-tool)
+- **Personalization** — Notifications / Balloon Notifications / Edge Swipe / Context Menu / Explorer Home & Gallery / Shortcut Appearance / Win11 New Task Manager Toggle / Windows Widgets Toggle
+- **Utilities** — Hibernate / Fast Startup / Photo Viewer / Uninstall & Install Edge / WebView2 / Safe Mode / Enter BIOS
+- **Updates** — Certificate Update / KGL Update / Pause Updates / Hide Update Page / Driver Update Policy / Update Channel / Multi-source Fallback Check
 
 ## Credits
 
-- **[ionuttbara/windows-defender-remover](https://github.com/ionuttbara/windows-defender-remover)** — Reference for Defender disable approach
+- **[meetrevision/revision-tool](https://github.com/meetrevision/revision-tool)** — Inspiration for this project
 - **[Lucide](https://lucide.dev/)** — Open source icon library
 
 ## License
 
-This project is open source under the **GNU General Public License v3.0**.
+This project is open source under the **MIT License**.
 
 ## Build
 
