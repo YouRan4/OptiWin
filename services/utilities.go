@@ -181,6 +181,40 @@ func InstallWebView2() string {
 	return "WebView2 安装/升级完成"
 }
 
+// InstallEdge 安装/恢复 Microsoft Edge：清除阻止复活策略并下载官方安装器重新安装
+func InstallEdge() string {
+	// 清除卸载时设置的阻止复活策略键
+	utils.RegDeleteValueE(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\EdgeUpdate`, "DoNotUpdateToEdgeWithChromium")
+	utils.RegDeleteValueE(registry.LOCAL_MACHINE, `SOFTWARE\Policies\Microsoft\EdgeUpdate`, `Install{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}`)
+	utils.RegDeleteValueE(registry.LOCAL_MACHINE, `SOFTWARE\Policies\Microsoft\EdgeUpdate`, `Update{56EB18F8-B008-4CBD-B6D2-8C97FE7E9062}`)
+
+	// 下载官方 Edge 安装器
+	tmp := os.TempDir() + `\MicrosoftEdgeSetup.exe`
+	url := "https://go.microsoft.com/fwlink/?linkid=2149172"
+	out, err := utils.GetHTTPClient().Get(url)
+	if err != nil {
+		return "下载失败: " + err.Error()
+	}
+	defer out.Body.Close()
+
+	f, err := os.Create(tmp)
+	if err != nil {
+		return "创建文件失败: " + err.Error()
+	}
+	_, err = io.Copy(f, out.Body)
+	f.Close()
+	if err != nil {
+		return "下载不完整: " + err.Error()
+	}
+
+	cmd := exec.Command(tmp, "/silent", "/install")
+	utils.HideWindow(cmd)
+	if err := cmd.Run(); err != nil {
+		return "安装失败: " + err.Error()
+	}
+	return "Edge 已恢复安装，策略已清除"
+}
+
 func SetSafeBoot(mode string) bool {
 	utils.RunHide("bcdedit", "/deletevalue", "{current}", "safeboot")
 	if mode == "minimal" {

@@ -109,19 +109,22 @@ async function onCheckUpdate() {
           </svg><span>YouRan4/OptiWin</span>
         </span></div>
         <div class="info-card">
-          <div class="info-header">{{ i18n('info.basedOn') }}</div>
-          <span class="info-link" @click="BrowserOpenURL('https://github.com/meetrevision/revision-tool')">meetrevision/revision-tool</span>
-        </div>
-        <div class="info-card">
           <div class="info-header">{{ i18n('info.license') }}</div>
           <p class="license-text">
-            {{ i18n('info.licenseDesc') }} <span style="color:var(--accent); cursor:pointer" @click="BrowserOpenURL('https://www.gnu.org/licenses/gpl-3.0.html')">GNU General Public License v3.0</span>
+            {{ i18n('info.licenseDesc') }} <span style="color:var(--accent); cursor:pointer" @click="BrowserOpenURL('https://opensource.org/licenses/MIT')">MIT License</span>
           </p>
         </div>
         <div class="info-card lang-card">
           <div class="lang-row">
             <span class="info-header" style="margin:0">{{ i18n('info.language') }}</span>
             <n-select v-model:value="currentLang" :options="langOptions" style="width:120px" @update:value="switchLang" />
+          </div>
+        </div>
+        <div class="info-card">
+          <div class="info-header">{{ i18n('info.credits') }}</div>
+          <div class="credits-list">
+            <span class="info-link" @click="BrowserOpenURL('https://github.com/meetrevision/revision-tool')">meetrevision/revision-tool</span>
+            <span class="info-link" @click="BrowserOpenURL('https://lucide.dev/')">Lucide</span>
           </div>
         </div>
       </div>
@@ -185,6 +188,8 @@ h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
 .license-text span:hover { text-decoration: underline; }
 .lang-card { padding: 12px 14px; }
 .lang-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+
+.credits-list { display: flex; flex-direction: column; gap: 6px; }
 
 
 .system-info-header {

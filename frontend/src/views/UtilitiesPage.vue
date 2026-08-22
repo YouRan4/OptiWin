@@ -7,7 +7,7 @@ import {
   GetHibernateStatus, EnableHibernate, DisableHibernate,
   GetFastStartupStatus, EnableFastStartup, DisableFastStartup,
   GetPhotoViewerStatus, EnablePhotoViewer, DisablePhotoViewer,
-  UninstallEdge, GetWebView2Version, InstallWebView2,
+  UninstallEdge, InstallEdge, GetWebView2Version, InstallWebView2,
   SetSafeBoot, RebootSystem, RebootToBios,
 } from '../../wailsjs/go/main/App'
 
@@ -50,6 +50,13 @@ async function onPhotoViewer(v: boolean) {
 async function onUninstallEdge() {
   const msg = await UninstallEdge()
   notify.create({ title: i18n('util.uninstallEdge'), description: msg, duration: 10000 })
+}
+
+async function onInstallEdge() {
+  const n = notify.create({ title: i18n('util.installEdge'), description: i18n('util.downloading'), duration: 0 })
+  const msg = await InstallEdge()
+  n.destroy()
+  notify.create({ title: i18n('util.installEdge'), description: msg, duration: 10000 })
 }
 
 async function onInstallWebView2() {
@@ -105,7 +112,10 @@ async function confirmBoot() {
       <div class="setting-row">
         <Globe :size="18" class="row-icon" />
         <div><div class="row-label">{{ i18n('util.edgeLabel') }}</div><div class="row-desc">{{ i18n('util.edgeDesc') }}</div></div>
-        <n-button size="small" @click="onUninstallEdge">{{ i18n('util.uninstall') }}</n-button>
+        <div style="display:flex; gap:8px; flex-shrink:0">
+          <n-button size="small" @click="onUninstallEdge">{{ i18n('util.uninstall') }}</n-button>
+          <n-button size="small" @click="onInstallEdge">{{ i18n('util.installEdge') }}</n-button>
+        </div>
       </div>
       <div class="setting-row">
         <Download :size="18" class="row-icon" />

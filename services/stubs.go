@@ -45,6 +45,12 @@ func RestoreGameBar() bool                    { return false }
 func GetUacStatus() bool                      { return true }
 func EnableUac() bool                         { return false }
 func DisableUac() bool                        { return false }
+func GetTamperProtectionStatus() bool         { return false }
+func GetRealtimeProtectionEnabled() bool      { return true }
+func OpenWindowsSecurity() bool               { return false }
+func GetCoreServicesDisabled() bool           { return false }
+func DisableCoreServices() bool               { return false }
+func EnableCoreServices() bool                { return false }
 func GetVbsStatus() bool                      { return true }
 func EnableVbs() bool                         { return false }
 func DisableVbs() bool                        { return false }
@@ -72,6 +78,9 @@ func GetRemoveShieldStatus() bool             { return false }
 func SetRemoveShield(on bool) bool            { return false }
 func GetOldTaskManagerStatus() bool           { return false }
 func SetOldTaskManager(enable bool) bool      { return false }
+func GetWidgetsStatus() bool                  { return true }
+func DisableWidgets() bool                    { return false }
+func EnableWidgets() bool                     { return false }
 
 func GetHibernateStatus() bool                { return false }
 func EnableHibernate() bool                   { return false }
@@ -83,6 +92,7 @@ func GetPhotoViewerStatus() bool              { return false }
 func EnablePhotoViewer() bool                 { return false }
 func DisablePhotoViewer() bool                { return false }
 func UninstallEdge() string                   { return "仅支持 Windows" }
+func InstallEdge() string                     { return "仅支持 Windows" }
 func GetWebView2Version() string              { return "未知" }
 func InstallWebView2() string                 { return "仅支持 Windows" }
 func SetSafeBoot(mode string) bool            { return false }

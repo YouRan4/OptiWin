@@ -9,6 +9,8 @@ export function ClearShaderCache():Promise<string>;
 
 export function DisableCState():Promise<boolean>;
 
+export function DisableCoreServices():Promise<boolean>;
+
 export function DisableDriverUpdates():Promise<boolean>;
 
 export function DisableFastStartup():Promise<boolean>;
@@ -37,9 +39,13 @@ export function DisableVbs():Promise<boolean>;
 
 export function DisableVisibility():Promise<boolean>;
 
+export function DisableWidgets():Promise<boolean>;
+
 export function DisableWindowedOptimization():Promise<boolean>;
 
 export function EnableCState():Promise<boolean>;
+
+export function EnableCoreServices():Promise<boolean>;
 
 export function EnableDriverUpdates():Promise<boolean>;
 
@@ -69,9 +75,13 @@ export function EnableVbs():Promise<boolean>;
 
 export function EnableVisibility():Promise<boolean>;
 
+export function EnableWidgets():Promise<boolean>;
+
 export function EnableWindowedOptimization():Promise<boolean>;
 
 export function GetCStateStatus():Promise<boolean>;
+
+export function GetCoreServicesDisabled():Promise<boolean>;
 
 export function GetCurrentDns():Promise<string>;
 
@@ -111,6 +121,8 @@ export function GetPhotoViewerStatus():Promise<boolean>;
 
 export function GetProxyInfo():Promise<string>;
 
+export function GetRealtimeProtectionEnabled():Promise<boolean>;
+
 export function GetRemoveShieldStatus():Promise<boolean>;
 
 export function GetRemoveShortcutArrowStatus():Promise<boolean>;
@@ -125,6 +137,8 @@ export function GetSystemAccentColor():Promise<string>;
 
 export function GetSystemInfo():Promise<string>;
 
+export function GetTamperProtectionStatus():Promise<boolean>;
+
 export function GetUacStatus():Promise<boolean>;
 
 export function GetUltimatePerformanceStatus():Promise<boolean>;
@@ -137,13 +151,19 @@ export function GetVisibilityStatus():Promise<boolean>;
 
 export function GetWebView2Version():Promise<string>;
 
+export function GetWidgetsStatus():Promise<boolean>;
+
 export function GetWindowedOptimizationStatus():Promise<boolean>;
+
+export function InstallEdge():Promise<string>;
 
 export function InstallWebView2():Promise<string>;
 
 export function ListAppxPackages():Promise<string>;
 
 export function ListIfeoEntries():Promise<string>;
+
+export function OpenWindowsSecurity():Promise<boolean>;
 
 export function RebootSystem():Promise<boolean>;
 

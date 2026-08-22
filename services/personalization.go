@@ -365,3 +365,22 @@ func SetOldTaskManager(enable bool) bool {
 	utils.RestartExplorer()
 	return success
 }
+
+// widgetsPolicyPath Windows 小组件组策略键（AllowNewsAndInterests=0 禁用）
+const widgetsPolicyPath = `SOFTWARE\Policies\Microsoft\Dsh`
+
+// GetWidgetsStatus 检测小组件是否启用：AllowNewsAndInterests=0(已禁用) 返回 false
+func GetWidgetsStatus() bool {
+	v, err := utils.RegReadDWord(registry.LOCAL_MACHINE, widgetsPolicyPath, "AllowNewsAndInterests")
+	return err != nil || v != 0
+}
+
+// DisableWidgets 禁用 Windows 小组件：写组策略键
+func DisableWidgets() bool {
+	return utils.RegSetDWordE(registry.LOCAL_MACHINE, widgetsPolicyPath, "AllowNewsAndInterests", 0) == nil
+}
+
+// EnableWidgets 恢复 Windows 小组件：删除组策略键
+func EnableWidgets() bool {
+	return utils.RegDeleteValueE(registry.LOCAL_MACHINE, widgetsPolicyPath, "AllowNewsAndInterests") == nil
+}

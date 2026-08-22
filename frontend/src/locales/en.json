@@ -66,7 +66,24 @@
     "dns_baidu": "Baidu DNS",
     "dns_google": "Google DNS",
     "dns_cloudflare": "Cloudflare DNS",
-    "dns_quad9": "Quad9 DNS"
+    "dns_quad9": "Quad9 DNS",
+    "defenderModule": "Windows Defender",
+    "defenderTitle": "Disable Windows Defender Real-time Protection",
+    "defenderStatusEnabled": "Status: Running",
+    "defenderStatusDisabled": "Status: Disabled",
+    "defenderDisableBtn": "Disable",
+    "defenderEnableBtn": "Restore",
+    "defenderDisabled": "Windows Defender disabled, takes full effect after restart",
+    "defenderEnabled": "Windows Defender restored, takes full effect after restart",
+    "defenderFail": "Operation failed, make sure Tamper Protection is off and run as administrator",
+    "defenderTpTitle": "Disable Real-time Protection & Tamper Protection",
+    "defenderTpBtn": "Open Security Center",
+    "defenderStep1": "Go to Security Center and disable Real-time Protection and Tamper Protection first",
+    "defenderStep2": "Run Disable or Restore for Windows Defender",
+    "defenderStep3": "Restart the computer for changes to take effect",
+    "defenderWarnTitle": "Cannot disable Windows Defender",
+    "defenderWarnDesc": "Real-time Protection or Tamper Protection is still running. Please disable them in Security Center first, then run the disable operation again.",
+    "defenderOkBtn": "OK"
   },
   "upd": {
     "exitInsider": "Exit Insider",
@@ -105,8 +122,8 @@
     "apps": "App Settings",
     "photoViewer": "Windows Photo Viewer",
     "photoViewerDesc": "Enable classic Windows Photo Viewer to open image files",
-    "edgeLabel": "Uninstall Microsoft Edge",
-    "edgeDesc": "Safe uninstall (preserves WebView2)",
+    "edgeLabel": "Microsoft Edge",
+    "edgeDesc": "Safely uninstall or restore (preserves WebView2)",
     "uninstall": "Uninstall",
     "currentVersion": "Current Version:",
     "install": "Install/Upgrade",
@@ -116,7 +133,8 @@
     "bootNormal": "Exit Safe Mode & Reboot",
     "bootBios": "Enter BIOS (Reboot)",
     "confirmReboot": "Confirm & Reboot",
-    "safeModeExitNote": "To exit Safe Mode, click the \"Exit Safe Mode & Reboot\" button below"
+    "safeModeExitNote": "To exit Safe Mode, click the \"Exit Safe Mode & Reboot\" button below",
+    "installEdge": "Install Edge"
   },
   "pers": {
     "desktop": "Desktop",
@@ -143,7 +161,9 @@
     "notifOff": "Notifications Off",
     "notifAllOff": "All Off",
     "win11TaskManager": "Win11 New Task Manager",
-    "win11TaskManagerDesc": "Enable or disable Win11 new Task Manager"
+    "win11TaskManagerDesc": "Enable or disable Win11 new Task Manager",
+    "widgets": "Windows Widgets",
+    "widgetsDesc": "When disabled, the taskbar widgets button and panel are hidden"
   },
   "perf": {
     "restartRequired": "Restart required for changes to take effect",
@@ -206,7 +226,6 @@
     "confirm": "Confirm"
   },
   "info": {
-    "basedOn": "Based on meetrevision/revision-tool",
     "license": "License",
     "licenseDesc": "Under",
     "language": "Language",
@@ -214,6 +233,7 @@
     "build": "Build",
     "cpu": "CPU",
     "memory": "Memory",
-    "proxy": "Proxy"
+    "proxy": "Proxy",
+    "credits": "Credits"
   }
 }

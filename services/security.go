@@ -12,6 +12,95 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
+// realtimeScanPolicyPath Defender 实时保护组策略键路径
+const realtimeScanPolicyPath = `SOFTWARE\Policies\Microsoft\Windows Defender\Real-Time Protection`
+
+// defenderPolicyPath Defender 主策略键（DisableAntiSpyware 触发"由管理员管理"横幅）
+const defenderPolicyPath = `SOFTWARE\Policies\Microsoft\Windows Defender`
+
+// realtimeProtectionValues 实时保护全部组策略开关（1=禁用）
+var realtimeProtectionValues = []string{
+	"DisableRealtimeMonitoring",     // 实时监控
+	"DisableBehaviorMonitoring",     // 行为监控
+	"DisableOnAccessProtection",     // 访问时保护
+	"DisableIOAVProtection",         // 下载/附件扫描
+	"DisableScanOnRealtimeEnable",   // 实时保护启用时扫描
+	"DisableIntrusionPreventionSystem", // 入侵防护系统
+}
+
+// setRealtimeProtection 禁用/恢复实时保护（写/删全部组策略键 + DisableAntiSpyware）
+// DisableAntiSpyware 触发"由管理员管理"横幅；必须在 TP 关闭后执行，TP 开启时引擎会忽略策略
+func setRealtimeProtection(disable bool) bool {
+	path := defenderPolicyPath
+	vals := realtimeProtectionValues
+	if disable {
+		if utils.RegSetDWordE(registry.LOCAL_MACHINE, path, "DisableAntiSpyware", 1) != nil {
+			return false
+		}
+		for _, n := range vals {
+			if utils.RegSetDWordE(registry.LOCAL_MACHINE, realtimeScanPolicyPath, n, 1) != nil {
+				return false
+			}
+		}
+		return true
+	}
+	if utils.RegDeleteValueE(registry.LOCAL_MACHINE, path, "DisableAntiSpyware") != nil {
+		return false
+	}
+	for _, n := range vals {
+		if utils.RegDeleteValueE(registry.LOCAL_MACHINE, realtimeScanPolicyPath, n) != nil {
+			return false
+		}
+	}
+	return true
+}
+
+// getMpStatus 查询 Get-MpComputerStatus 的指定布尔属性
+func getMpStatus(prop string) bool {
+	cmd := exec.Command("powershell.exe", "-NoProfile", "-NonInteractive",
+		"-Command", "(Get-MpComputerStatus)."+prop)
+	utils.HideWindow(cmd)
+	out, err := cmd.Output()
+	if err != nil {
+		return false
+	}
+	return strings.TrimSpace(string(out)) == "True"
+}
+
+// GetTamperProtectionStatus 篡改防护是否开启（开启时需先关闭才能禁实时保护）
+func GetTamperProtectionStatus() bool {
+	return getMpStatus("IsTamperProtected")
+}
+
+// GetRealtimeProtectionEnabled 实时保护是否运行中
+func GetRealtimeProtectionEnabled() bool {
+	return getMpStatus("RealTimeProtectionEnabled")
+}
+
+// OpenWindowsSecurity 打开安全中心篡改防护设置页
+func OpenWindowsSecurity() bool {
+	cmd := exec.Command("rundll32.exe", "url.dll,FileProtocolHandler",
+		"windowsdefender://threatsettings")
+	utils.HideWindow(cmd)
+	return cmd.Start() == nil
+}
+
+// GetCoreServicesDisabled 实时保护是否已禁用（DisableAntiSpyware 存在且=1）
+func GetCoreServicesDisabled() bool {
+	v, err := utils.RegReadDWord(registry.LOCAL_MACHINE, defenderPolicyPath, "DisableAntiSpyware")
+	return err == nil && v == 1
+}
+
+// DisableCoreServices 禁用实时保护释放资源（不动服务，MsMpEng.exe 保留但停止扫描）
+func DisableCoreServices() bool {
+	return setRealtimeProtection(true)
+}
+
+// EnableCoreServices 恢复实时保护
+func EnableCoreServices() bool {
+	return setRealtimeProtection(false)
+}
+
 func GetUacStatus() bool {
 	v, err := utils.RegReadDWord(registry.LOCAL_MACHINE,
 		`SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System`, "EnableLUA")

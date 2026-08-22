@@ -2,9 +2,11 @@
 import { ref, computed, onMounted } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NSwitch, NButton, NModal, NInput, NSelect } from 'naive-ui'
-import { Lock, Server, HardDrive, Search, RefreshCw, Trash2, Plus, Bug, AlertTriangle } from 'lucide-vue-next'
+import { Shield, Lock, Server, HardDrive, Search, RefreshCw, Trash2, Plus, Bug, AlertTriangle } from 'lucide-vue-next'
 import {
   GetUacStatus, EnableUac, DisableUac,
+  GetCoreServicesDisabled, DisableCoreServices, EnableCoreServices,
+  GetTamperProtectionStatus, GetRealtimeProtectionEnabled, OpenWindowsSecurity,
   GetVbsStatus, EnableVbs, DisableVbs,
   GetMemoryIntegrityStatus, EnableMemoryIntegrity, DisableMemoryIntegrity,
   ListIfeoEntries, AddIfeoEntry, RemoveIfeoEntry, GetRunningProcesses, SetDns, GetCurrentDns,
@@ -17,10 +19,12 @@ const notify = useNotify()
 
 const showModal = ref(false)
 const modalText = ref('')
+const showDefenderWarn = ref(false)
 
 const uac = ref(false)
 const vbs = ref(false)
 const memIntegrity = ref(false)
+const coreServicesDisabled = ref(false)
 
 // IFEO
 interface IfeoEntry {
@@ -125,6 +129,7 @@ onMounted(async () => {
   uac.value = await GetUacStatus()
   vbs.value = await GetVbsStatus()
   memIntegrity.value = await GetMemoryIntegrityStatus()
+  coreServicesDisabled.value = await GetCoreServicesDisabled()
   await loadIfeoEntries()
   await loadCurrentDns()
 })
@@ -142,6 +147,39 @@ async function onVbs(v: boolean) {
 async function onMemIntegrity(v: boolean) {
   if (v) await EnableMemoryIntegrity(); else await DisableMemoryIntegrity()
   memIntegrity.value = await GetMemoryIntegrityStatus()
+}
+
+async function onDisableDefender() {
+  // 检测实时保护与篡改保护是否都已关闭
+  const tpOn = await GetTamperProtectionStatus()
+  const rtOn = await GetRealtimeProtectionEnabled()
+  if (tpOn || rtOn) {
+    showDefenderWarn.value = true // 弹窗提示，结束执行
+    return
+  }
+
+  // 均已关闭：执行禁用（实时保护 + 核心服务）
+  modalText.value = i18n('sec.operating')
+  showModal.value = true
+  try {
+    const ok = await DisableCoreServices()
+    coreServicesDisabled.value = await GetCoreServicesDisabled()
+    notify.create({ title: i18n('sec.notifyTitle'), description: ok ? i18n('sec.defenderDisabled') : i18n('sec.defenderFail'), duration: 4000 })
+  } finally {
+    showModal.value = false
+  }
+}
+
+async function onEnableDefender() {
+  modalText.value = i18n('sec.operating')
+  showModal.value = true
+  try {
+    const ok = await EnableCoreServices()
+    coreServicesDisabled.value = await GetCoreServicesDisabled()
+    notify.create({ title: i18n('sec.notifyTitle'), description: ok ? i18n('sec.defenderEnabled') : i18n('sec.defenderFail'), duration: 4000 })
+  } finally {
+    showModal.value = false
+  }
 }
 
 // IFEO functions
@@ -267,6 +305,40 @@ async function onTelemetryToggle(v: boolean) {
 <template>
   <div class="page">
     <WaitModal :show="showModal" :text="modalText" />
+    <div class="setting-card">
+      <div class="setting-card-header setting-card-header--flat">
+        <span class="header-title">{{ i18n('sec.defenderModule') }}</span>
+      </div>
+      <div class="setting-row">
+        <Shield :size="18" class="row-icon" />
+        <div>
+          <div class="row-label">{{ i18n('sec.defenderTitle') }}</div>
+          <div class="row-desc">{{ coreServicesDisabled ? i18n('sec.defenderStatusDisabled') : i18n('sec.defenderStatusEnabled') }}</div>
+        </div>
+        <div style="display:flex; gap:8px; flex-shrink:0">
+          <n-button size="small" strong :disabled="coreServicesDisabled" @click="onDisableDefender">
+            {{ i18n('sec.defenderDisableBtn') }}
+          </n-button>
+          <n-button size="small" strong :disabled="!coreServicesDisabled" @click="onEnableDefender">
+            {{ i18n('sec.defenderEnableBtn') }}
+          </n-button>
+        </div>
+      </div>
+      <div class="setting-row">
+        <Shield :size="18" class="row-icon" />
+        <div>
+          <div class="row-label">{{ i18n('sec.defenderTpTitle') }}</div>
+        </div>
+        <n-button size="small" strong @click="OpenWindowsSecurity()">{{ i18n('sec.defenderTpBtn') }}</n-button>
+      </div>
+      <div style="padding:8px 12px 12px; font-size:12px; color:var(--text2); line-height:1.8">
+        <div>说明：</div>
+        <div>1. {{ i18n('sec.defenderStep1') }}</div>
+        <div>2. {{ i18n('sec.defenderStep2') }}</div>
+        <div>3. {{ i18n('sec.defenderStep3') }}</div>
+      </div>
+    </div>
+
     <div class="setting-card">
       <div class="setting-card-header setting-card-header--flat">
         <span class="header-title">{{ i18n('sec.systemProtection') }}</span>
@@ -449,6 +521,23 @@ async function onTelemetryToggle(v: boolean) {
         <div style="display:flex; justify-content:flex-end; gap:8px">
           <n-button @click="showDeleteModal = false">{{ i18n('sec.ifeoCancel') }}</n-button>
           <n-button @click="doDeleteIfeo">{{ i18n('sec.ifeoConfirm') }}</n-button>
+        </div>
+      </template>
+    </n-modal>
+
+    <n-modal
+      v-model:show="showDefenderWarn"
+      preset="card"
+      :title="i18n('sec.defenderWarnTitle')"
+      style="width: 440px; max-width: 90vw;"
+      :mask-closable="false"
+      closable
+      @close="showDefenderWarn = false"
+    >
+      <p style="color: var(--text2); line-height: 1.8;">{{ i18n('sec.defenderWarnDesc') }}</p>
+      <template #footer>
+        <div style="display: flex; justify-content: flex-end; gap: 8px;">
+          <n-button @click="showDefenderWarn = false">{{ i18n('sec.defenderOkBtn') }}</n-button>
         </div>
       </template>
     </n-modal>

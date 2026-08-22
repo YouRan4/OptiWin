@@ -2,7 +2,7 @@
 import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NSelect, NSwitch } from 'naive-ui'
-import { Bell, MessageCircle, Hand, List, Home, Image, ArrowUpRight, Type, ShieldOff, Activity } from 'lucide-vue-next'
+import { Bell, MessageCircle, Hand, List, Home, Image, ArrowUpRight, Type, ShieldOff, Activity, LayoutGrid } from 'lucide-vue-next'
 import {
   GetNotificationStatus, SetNotificationMode,
   GetLegacyBalloonStatus, SetLegacyBalloon,
@@ -14,6 +14,7 @@ import {
   GetRemoveShortcutTextStatus, SetRemoveShortcutText,
   GetRemoveShieldStatus, SetRemoveShield,
   GetOldTaskManagerStatus, SetOldTaskManager,
+  GetWidgetsStatus, DisableWidgets, EnableWidgets,
 } from '../../wailsjs/go/main/App'
 
 const { t: i18n } = useI18n()
@@ -28,6 +29,7 @@ const removeArrow = ref(false)
 const removeText = ref(false)
 const removeShield = ref(false)
 const win11TaskManager = ref(true)
+const widgets = ref(true)
 
 onMounted(async () => {
   notif.value = await GetNotificationStatus()
@@ -40,6 +42,7 @@ onMounted(async () => {
   removeText.value = await GetRemoveShortcutTextStatus()
   removeShield.value = await GetRemoveShieldStatus()
   win11TaskManager.value = await GetOldTaskManagerStatus()
+  widgets.value = await GetWidgetsStatus()
 })
 
 const notifOptions = computed(() => [
@@ -97,6 +100,11 @@ async function onWin11TaskManager(v: boolean) {
   await SetOldTaskManager(v)
   win11TaskManager.value = await GetOldTaskManagerStatus()
 }
+
+async function onWidgets(v: boolean) {
+  if (v) await EnableWidgets(); else await DisableWidgets()
+  widgets.value = await GetWidgetsStatus()
+}
 </script>
 
 <template>
@@ -123,6 +131,10 @@ async function onWin11TaskManager(v: boolean) {
       <div class="setting-row">
         <Activity :size="18" class="row-icon" />
         <div><div class="row-label">{{ i18n('pers.win11TaskManager') }}</div><div class="row-desc">{{ i18n('pers.win11TaskManagerDesc') }}</div></div><n-switch v-model:value="win11TaskManager" @update:value="onWin11TaskManager" />
+      </div>
+      <div class="setting-row">
+        <LayoutGrid :size="18" class="row-icon" />
+        <div><div class="row-label">{{ i18n('pers.widgets') }}</div><div class="row-desc">{{ i18n('pers.widgetsDesc') }}</div></div><n-switch v-model:value="widgets" @update:value="onWidgets" />
       </div>
       <div class="setting-row">
         <Home :size="18" class="row-icon" />

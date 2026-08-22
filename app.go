@@ -4,7 +4,6 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
-	"fmt"
 	"io"
 	"net/http"
 
@@ -26,28 +25,50 @@ func (a *App) GetProxyInfo() string      { return utils.GetProxyInfo() }
 
 const StatusUpToDate = "same"
 
+// githubReleaseAPI GitHub 官方 release 接口
+const githubReleaseAPI = "https://api.github.com/repos/YouRan4/OptiWin/releases/latest"
+
+// githubReleaseMirrors 国内可访问的 GitHub API 镜像（官方源失败时依次回退）
+var githubReleaseMirrors = []string{
+	"https://ghproxy.com/https://api.github.com/repos/YouRan4/OptiWin/releases/latest",
+	"https://gh-proxy.com/https://api.github.com/repos/YouRan4/OptiWin/releases/latest",
+	"https://mirror.ghproxy.com/https://api.github.com/repos/YouRan4/OptiWin/releases/latest",
+}
+
 func (a *App) CheckUpdate() string {
+	// 多源回退：官方源优先（已配置代理的用户直接成功），失败后尝试国内镜像
+	for _, url := range append([]string{githubReleaseAPI}, githubReleaseMirrors...) {
+		result := fetchRelease(url)
+		if result != "" {
+			return result
+		}
+	}
+	return "err:无法连接 GitHub（官方与镜像均不可达）"
+}
+
+// fetchRelease 从指定 URL 获取最新 release 信息，失败返回空字符串
+func fetchRelease(url string) string {
 	client := utils.GetHTTPClient()
-	req, err := http.NewRequest("GET", "https://api.github.com/repos/YouRan4/OptiWin/releases/latest", nil)
+	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return "err:创建请求失败"
+		return ""
 	}
 	req.Header.Set("User-Agent", "OptiWin/1.0")
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return "err:无法连接 GitHub"
+		return ""
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return "err:服务器返回 " + fmt.Sprint(resp.StatusCode)
+		return ""
 	}
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return "err:读取响应失败"
+		return ""
 	}
 
 	var release struct {
@@ -56,11 +77,11 @@ func (a *App) CheckUpdate() string {
 		HTMLURL string `json:"html_url"`
 	}
 	if err := json.Unmarshal(b, &release); err != nil {
-		return "err:解析版本信息失败"
+		return ""
 	}
 
 	if release.TagName == "" {
-		return "err:未获取到版本号"
+		return ""
 	}
 
 	if compareVersion(CurrentVersion, release.TagName) >= 0 {
@@ -73,7 +94,7 @@ func (a *App) CheckUpdate() string {
 		"url":     release.HTMLURL,
 	})
 	if err != nil {
-		return "err:序列化失败"
+		return ""
 	}
 	return string(result)
 }
@@ -145,6 +166,14 @@ func (a *App) ClearShaderCache() string { return services.ClearShaderCache() }
 func (a *App) RemoveGameBar() bool  { return services.RemoveGameBar() }
 func (a *App) RestoreGameBar() bool { return services.RestoreGameBar() }
 
+// --- 实时扫描 ---
+func (a *App) GetCoreServicesDisabled() bool       { return services.GetCoreServicesDisabled() }
+func (a *App) DisableCoreServices() bool           { return services.DisableCoreServices() }
+func (a *App) EnableCoreServices() bool            { return services.EnableCoreServices() }
+func (a *App) GetTamperProtectionStatus() bool     { return services.GetTamperProtectionStatus() }
+func (a *App) GetRealtimeProtectionEnabled() bool  { return services.GetRealtimeProtectionEnabled() }
+func (a *App) OpenWindowsSecurity() bool           { return services.OpenWindowsSecurity() }
+
 // --- UAC ---
 func (a *App) GetUacStatus() bool { return services.GetUacStatus() }
 func (a *App) EnableUac() bool    { return services.EnableUac() }
@@ -194,6 +223,11 @@ func (a *App) SetRemoveShield(on bool) bool        { return services.SetRemoveSh
 func (a *App) GetOldTaskManagerStatus() bool      { return services.GetOldTaskManagerStatus() }
 func (a *App) SetOldTaskManager(enable bool) bool { return services.SetOldTaskManager(enable) }
 
+// --- 小组件 ---
+func (a *App) GetWidgetsStatus() bool { return services.GetWidgetsStatus() }
+func (a *App) DisableWidgets() bool   { return services.DisableWidgets() }
+func (a *App) EnableWidgets() bool    { return services.EnableWidgets() }
+
 // --- 休眠 ---
 func (a *App) GetHibernateStatus() bool { return services.GetHibernateStatus() }
 func (a *App) EnableHibernate() bool    { return services.EnableHibernate() }
@@ -211,6 +245,7 @@ func (a *App) DisablePhotoViewer() bool   { return services.DisablePhotoViewer()
 
 // --- Edge / WebView2 ---
 func (a *App) UninstallEdge() string      { return services.UninstallEdge() }
+func (a *App) InstallEdge() string        { return services.InstallEdge() }
 func (a *App) GetWebView2Version() string { return services.GetWebView2Version() }
 func (a *App) InstallWebView2() string    { return services.InstallWebView2() }
 

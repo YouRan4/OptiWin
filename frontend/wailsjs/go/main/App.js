@@ -18,6 +18,10 @@ export function DisableCState() {
   return window['go']['main']['App']['DisableCState']();
 }
 
+export function DisableCoreServices() {
+  return window['go']['main']['App']['DisableCoreServices']();
+}
+
 export function DisableDriverUpdates() {
   return window['go']['main']['App']['DisableDriverUpdates']();
 }
@@ -74,12 +78,20 @@ export function DisableVisibility() {
   return window['go']['main']['App']['DisableVisibility']();
 }
 
+export function DisableWidgets() {
+  return window['go']['main']['App']['DisableWidgets']();
+}
+
 export function DisableWindowedOptimization() {
   return window['go']['main']['App']['DisableWindowedOptimization']();
 }
 
 export function EnableCState() {
   return window['go']['main']['App']['EnableCState']();
+}
+
+export function EnableCoreServices() {
+  return window['go']['main']['App']['EnableCoreServices']();
 }
 
 export function EnableDriverUpdates() {
@@ -138,12 +150,20 @@ export function EnableVisibility() {
   return window['go']['main']['App']['EnableVisibility']();
 }
 
+export function EnableWidgets() {
+  return window['go']['main']['App']['EnableWidgets']();
+}
+
 export function EnableWindowedOptimization() {
   return window['go']['main']['App']['EnableWindowedOptimization']();
 }
 
 export function GetCStateStatus() {
   return window['go']['main']['App']['GetCStateStatus']();
+}
+
+export function GetCoreServicesDisabled() {
+  return window['go']['main']['App']['GetCoreServicesDisabled']();
 }
 
 export function GetCurrentDns() {
@@ -222,6 +242,10 @@ export function GetProxyInfo() {
   return window['go']['main']['App']['GetProxyInfo']();
 }
 
+export function GetRealtimeProtectionEnabled() {
+  return window['go']['main']['App']['GetRealtimeProtectionEnabled']();
+}
+
 export function GetRemoveShieldStatus() {
   return window['go']['main']['App']['GetRemoveShieldStatus']();
 }
@@ -250,6 +274,10 @@ export function GetSystemInfo() {
   return window['go']['main']['App']['GetSystemInfo']();
 }
 
+export function GetTamperProtectionStatus() {
+  return window['go']['main']['App']['GetTamperProtectionStatus']();
+}
+
 export function GetUacStatus() {
   return window['go']['main']['App']['GetUacStatus']();
 }
@@ -274,8 +302,16 @@ export function GetWebView2Version() {
   return window['go']['main']['App']['GetWebView2Version']();
 }
 
+export function GetWidgetsStatus() {
+  return window['go']['main']['App']['GetWidgetsStatus']();
+}
+
 export function GetWindowedOptimizationStatus() {
   return window['go']['main']['App']['GetWindowedOptimizationStatus']();
+}
+
+export function InstallEdge() {
+  return window['go']['main']['App']['InstallEdge']();
 }
 
 export function InstallWebView2() {
@@ -288,6 +324,10 @@ export function ListAppxPackages() {
 
 export function ListIfeoEntries() {
   return window['go']['main']['App']['ListIfeoEntries']();
+}
+
+export function OpenWindowsSecurity() {
+  return window['go']['main']['App']['OpenWindowsSecurity']();
 }
 
 export function RebootSystem() {
