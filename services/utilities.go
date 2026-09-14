@@ -5,13 +5,14 @@ package services
 import (
 	"OptiWin/utils"
 	"fmt"
-	"golang.org/x/sys/windows/registry"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
 	"unsafe"
+
+	"golang.org/x/sys/windows/registry"
 )
 
 func GetHibernateStatus() bool {
@@ -104,7 +105,6 @@ func DisablePhotoViewer() bool {
 func UninstallEdge() string {
 	// 结束 Edge 进程，避免文件占用导致删除失败
 	exec.Command("taskkill", "/f", "/im", "msedge.exe").Run()
-	exec.Command("taskkill", "/f", "/im", "msedgewebview2.exe").Run()
 
 	// 优先调用官方卸载器（24H2 起命令行调用可能被拒绝，失败不影响后续清理）
 	matches, _ := filepath.Glob(`C:\Program Files (x86)\Microsoft\Edge\Application\*\Installer\setup.exe`)

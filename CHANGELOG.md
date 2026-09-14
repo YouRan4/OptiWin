@@ -2,6 +2,13 @@
 
 ---
 
+## v1.7.1
+
+### 修复
+- **UninstallEdge 不再误杀工具箱自身 UI**：移除 `taskkill msedgewebview2.exe`——它是 WebView2 Runtime 进程，工具箱界面同样基于 WebView2，原命令会连同工具箱一起终止；Edge 浏览器本体为 `msedge.exe`，卸载仅需结束该进程
+
+---
+
 ## v1.7.0
 
 ### 新增
