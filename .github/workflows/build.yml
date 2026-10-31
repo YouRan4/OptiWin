@@ -65,6 +65,7 @@ jobs:
         uses: softprops/action-gh-release@v2
         with:
           files: OptiWin-${{ github.ref_name }}.exe
+          body: ${{ github.event.push.head_commit.message || '' }}
           generate_release_notes: true
 
   sync-site:
@@ -104,5 +105,10 @@ jobs:
           git config user.name "github-actions[bot]"
           git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
           git add -A
+          # 同一版本重跑时页面文件可能已同步、只换了 exe 二进制，也要提交
+          if git diff --cached --quiet; then
+            echo "站点已是最新，无需提交"
+            exit 0
+          fi
           git commit -m "release: sync OptiWin ${{ github.ref_name }}"
           git push
