@@ -7,7 +7,7 @@
     "searchPlaceholder": "搜索设置（Ctrl+K）",
     "searchEmpty": "没有匹配的设置",
     "updateFailed": "修改失败，系统设置未生效",
-    "updateFailedDesc": "写入被安全软件或组策略拦截，详见日志 %LOCALAPPDATA%\\OptiWin\\logs\\app.log",
+    "updateFailedDesc": "写入被安全软件或组策略拦截，详见日志 %LOCALAPPDATA%\\OptiWin\\app.log",
     "explorerRestartHint": "需要重启资源管理器后生效",
     "explorerRestarting": "正在重启资源管理器…",
     "explorerRestartFailed": "重启失败：{err}",

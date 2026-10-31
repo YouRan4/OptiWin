@@ -14,13 +14,13 @@ import (
 	"golang.org/x/sys/windows/registry"
 )
 
-// Logf 追加一条日志到 %LOCALAPPDATA%\OptiWin\logs\app.log；日志写入失败时静默跳过
+// Logf 追加一条日志到 %LOCALAPPDATA%\OptiWin\app.log；日志写入失败时静默跳过
 func Logf(format string, args ...any) {
-	logDir := LogDir()
+	logPath := LogPath()
+	logDir := filepath.Dir(logPath)
 	if err := os.MkdirAll(logDir, 0755); err != nil {
 		return
 	}
-	logPath := filepath.Join(logDir, logFileName)
 	rotateLog(logDir, logPath)
 	f, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
 	if err != nil {

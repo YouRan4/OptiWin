@@ -7,7 +7,7 @@
     "searchPlaceholder": "Search settings (Ctrl+K)",
     "searchEmpty": "No matching setting",
     "updateFailed": "Update failed, the system setting was not changed",
-    "updateFailedDesc": "The write was blocked by security software or group policy. See %LOCALAPPDATA%\\OptiWin\\logs\\app.log",
+    "updateFailedDesc": "The write was blocked by security software or group policy. See %LOCALAPPDATA%\\OptiWin\\app.log",
     "explorerRestartHint": "Restart Explorer for this change to take effect",
     "explorerRestarting": "Restarting Explorer…",
     "explorerRestartFailed": "Restart failed: {err}",
