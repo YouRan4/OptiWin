@@ -5,7 +5,9 @@ package services
 import (
 	"OptiWin/utils"
 	"errors"
+	"fmt"
 	"os"
+	"path/filepath"
 	"time"
 
 	"golang.org/x/sys/windows/registry"
@@ -80,13 +82,23 @@ func deleteIgnoringMissing(hive registry.Key, path, name string) error {
 	return err
 }
 
+// reportErr 记录操作失败并返回是否成功，供不带前缀的开关方法汇总写入结果
+func reportErr(op string, err error) bool {
+	if err != nil {
+		utils.Logf("[services] %s 失败: %v", op, err)
+		utils.SetLastError(fmt.Sprintf("%s: %v", op, err))
+		return false
+	}
+	return true
+}
+
 func dwordOn(hive registry.Key, path, name string) bool {
 	v, err := utils.RegReadDWord(hive, path, name)
 	return err == nil && v == 1
 }
 
-// setDWordToggle 通用开关：目标状态与当前一致则跳过，写入成功后重启 Explorer
-func setDWordToggle(hive registry.Key, path, name string, on bool) bool {
+// setDWordToggle 通用开关：目标状态与当前一致则跳过，写入成功后重启 Explorer；op 用于失败日志
+func setDWordToggle(op string, hive registry.Key, path, name string, on bool) bool {
 	if dwordOn(hive, path, name) == on {
 		return true
 	}
@@ -95,9 +107,8 @@ func setDWordToggle(hive registry.Key, path, name string, on bool) bool {
 		v = 1
 	}
 	if err := utils.RegSetDWordE(hive, path, name, v); err != nil {
-		return false
+		return reportErr(op, err)
 	}
-	utils.RestartExplorer()
 	return true
 }
 
@@ -118,56 +129,36 @@ func GetNotificationStatus() string {
 // SetNotificationMode 设置通知模式
 // mode: "0"=开启, "1"=仅关闭通知, "2"=完全关闭
 func SetNotificationMode(mode string) bool {
-	before := GetNotificationStatus()
-
+	const op = "SetNotificationMode"
+	var err error
 	switch mode {
 	case NotificationOn:
-		if err := deleteIgnoringMissing(registry.CURRENT_USER, regPathPushNotificationsPol, regValueNoToastAppNotif); err != nil {
-			return false
-		}
-		if err := deleteIgnoringMissing(registry.CURRENT_USER, regPathExplorerPol, regValueDisableNotifCenter); err != nil {
-			return false
-		}
-		if err := utils.RegSetDWordE(registry.CURRENT_USER, regPathPushNotifications, regValueToastEnabled, 1); err != nil {
-			return false
-		}
-		if err := utils.RegSetDWordE(registry.LOCAL_MACHINE, regPathPushNotifications, regValueToastEnabled, 1); err != nil {
-			return false
-		}
+		err = errors.Join(
+			deleteIgnoringMissing(registry.CURRENT_USER, regPathPushNotificationsPol, regValueNoToastAppNotif),
+			deleteIgnoringMissing(registry.CURRENT_USER, regPathExplorerPol, regValueDisableNotifCenter),
+			utils.RegSetDWordE(registry.CURRENT_USER, regPathPushNotifications, regValueToastEnabled, 1),
+			utils.RegSetDWordE(registry.LOCAL_MACHINE, regPathPushNotifications, regValueToastEnabled, 1),
+		)
 	case NotificationToastOff:
 		// 从"完全关闭"降级时必须清除 DisableNotificationCenter
-		if err := deleteIgnoringMissing(registry.CURRENT_USER, regPathExplorerPol, regValueDisableNotifCenter); err != nil {
-			return false
-		}
-		if err := utils.RegSetDWordE(registry.CURRENT_USER, regPathPushNotificationsPol, regValueNoToastAppNotif, 1); err != nil {
-			return false
-		}
-		if err := utils.RegSetDWordE(registry.CURRENT_USER, regPathPushNotifications, regValueToastEnabled, 0); err != nil {
-			return false
-		}
-		if err := utils.RegSetDWordE(registry.LOCAL_MACHINE, regPathPushNotifications, regValueToastEnabled, 0); err != nil {
-			return false
-		}
+		err = errors.Join(
+			deleteIgnoringMissing(registry.CURRENT_USER, regPathExplorerPol, regValueDisableNotifCenter),
+			utils.RegSetDWordE(registry.CURRENT_USER, regPathPushNotificationsPol, regValueNoToastAppNotif, 1),
+			utils.RegSetDWordE(registry.CURRENT_USER, regPathPushNotifications, regValueToastEnabled, 0),
+			utils.RegSetDWordE(registry.LOCAL_MACHINE, regPathPushNotifications, regValueToastEnabled, 0),
+		)
 	case NotificationOff:
-		if err := utils.RegSetDWordE(registry.CURRENT_USER, regPathPushNotificationsPol, regValueNoToastAppNotif, 1); err != nil {
-			return false
-		}
-		if err := utils.RegSetDWordE(registry.CURRENT_USER, regPathPushNotifications, regValueToastEnabled, 0); err != nil {
-			return false
-		}
-		if err := utils.RegSetDWordE(registry.LOCAL_MACHINE, regPathPushNotifications, regValueToastEnabled, 0); err != nil {
-			return false
-		}
-		if err := utils.RegSetDWordE(registry.CURRENT_USER, regPathExplorerPol, regValueDisableNotifCenter, 1); err != nil {
-			return false
-		}
+		err = errors.Join(
+			utils.RegSetDWordE(registry.CURRENT_USER, regPathPushNotificationsPol, regValueNoToastAppNotif, 1),
+			utils.RegSetDWordE(registry.CURRENT_USER, regPathPushNotifications, regValueToastEnabled, 0),
+			utils.RegSetDWordE(registry.LOCAL_MACHINE, regPathPushNotifications, regValueToastEnabled, 0),
+			utils.RegSetDWordE(registry.CURRENT_USER, regPathExplorerPol, regValueDisableNotifCenter, 1),
+		)
 	default:
-		return false
+		return reportErr(op, fmt.Errorf("未知通知模式 %q", mode))
 	}
-
-	// 状态实际变化才重启 Explorer，避免无谓闪屏
-	if GetNotificationStatus() != before {
-		utils.RestartExplorer()
+	if !reportErr(op, err) {
+		return false
 	}
 	return true
 }
@@ -177,7 +168,7 @@ func GetLegacyBalloonStatus() bool {
 }
 
 func SetLegacyBalloon(on bool) bool {
-	return setDWordToggle(registry.CURRENT_USER, regPathExplorerPol, regValueLegacyBalloon, on)
+	return setDWordToggle("SetLegacyBalloon", registry.CURRENT_USER, regPathExplorerPol, regValueLegacyBalloon, on)
 }
 
 func GetEdgeSwipeStatus() bool {
@@ -192,14 +183,13 @@ func SetEdgeSwipe(on bool) bool {
 	}
 	if on {
 		if err := deleteIgnoringMissing(registry.LOCAL_MACHINE, regPathEdgeUIPol, regValueAllowEdgeSwipe); err != nil {
-			return false
+			return reportErr("SetEdgeSwipe", err)
 		}
 	} else {
 		if err := utils.RegSetDWordE(registry.LOCAL_MACHINE, regPathEdgeUIPol, regValueAllowEdgeSwipe, 0); err != nil {
-			return false
+			return reportErr("SetEdgeSwipe", err)
 		}
 	}
-	utils.RestartExplorer()
 	return true
 }
 
@@ -215,14 +205,13 @@ func SetNewContextMenu(on bool) bool {
 	}
 	if on {
 		if err := deleteIgnoringMissing(registry.CURRENT_USER, regPathOldMenuCLSID, ""); err != nil {
-			return false
+			return reportErr("SetNewContextMenu", err)
 		}
 	} else {
 		if err := utils.RegWriteStringE(registry.CURRENT_USER, regPathOldMenuCLSID, "", ""); err != nil {
-			return false
+			return reportErr("SetNewContextMenu", err)
 		}
 	}
-	utils.RestartExplorer()
 	return true
 }
 
@@ -231,7 +220,7 @@ func GetExplorerHomeStatus() bool {
 }
 
 func SetExplorerHome(on bool) bool {
-	return setDWordToggle(registry.CURRENT_USER, regPathHomeCLSID, regValuePinnedToNS, on)
+	return setDWordToggle("SetExplorerHome", registry.CURRENT_USER, regPathHomeCLSID, regValuePinnedToNS, on)
 }
 
 func GetExplorerGalleryStatus() bool {
@@ -239,7 +228,7 @@ func GetExplorerGalleryStatus() bool {
 }
 
 func SetExplorerGallery(on bool) bool {
-	return setDWordToggle(registry.CURRENT_USER, regPathGalleryCLSID, regValuePinnedToNS, on)
+	return setDWordToggle("SetExplorerGallery", registry.CURRENT_USER, regPathGalleryCLSID, regValuePinnedToNS, on)
 }
 
 func GetRemoveShortcutArrowStatus() bool {
@@ -254,19 +243,18 @@ func SetRemoveShortcutArrow(on bool) bool {
 			return true
 		}
 		if err := utils.RegWriteStringE(registry.LOCAL_MACHINE, regPathShellIcons, regValueShellIconArrow, regDataArrowOverlay); err != nil {
-			return false
+			return reportErr("SetRemoveShortcutArrow", err)
 		}
 	} else {
 		if _, _, err := utils.RegReadString(registry.LOCAL_MACHINE, regPathShellIcons, regValueShellIconArrow); err != nil {
 			return true
 		}
 		if err := deleteIgnoringMissing(registry.LOCAL_MACHINE, regPathShellIcons, regValueShellIconArrow); err != nil {
-			return false
+			return reportErr("SetRemoveShortcutArrow", err)
 		}
 	}
 	// 清除图标缓存，避免残留损坏的缓存条目导致图标黑块或不刷新
 	utils.ExecuteString(`Remove-Item "$env:LOCALAPPDATA\IconCache.db","$env:LOCALAPPDATA\Microsoft\Windows\Explorer\iconcache_*" -Force -ErrorAction SilentlyContinue`)
-	utils.RestartExplorer()
 	return true
 }
 
@@ -281,14 +269,13 @@ func SetRemoveShortcutText(on bool) bool {
 	}
 	if on {
 		if err := utils.RegWriteStringE(registry.CURRENT_USER, regPathNamingTemplate, regValueShortcutNameTpl, regDataShortcutNameTemplate); err != nil {
-			return false
+			return reportErr("SetRemoveShortcutText", err)
 		}
 	} else {
 		if err := deleteIgnoringMissing(registry.CURRENT_USER, regPathNamingTemplate, regValueShortcutNameTpl); err != nil {
-			return false
+			return reportErr("SetRemoveShortcutText", err)
 		}
 	}
-	utils.RestartExplorer()
 	return true
 }
 
@@ -303,19 +290,18 @@ func SetRemoveShield(on bool) bool {
 			return true
 		}
 		if err := utils.RegWriteStringE(registry.LOCAL_MACHINE, regPathShellIcons, regValueShellIconShield, regDataShieldIcon); err != nil {
-			return false
+			return reportErr("SetRemoveShield", err)
 		}
 	} else {
 		if _, _, err := utils.RegReadString(registry.LOCAL_MACHINE, regPathShellIcons, regValueShellIconShield); err != nil {
 			return true
 		}
 		if err := deleteIgnoringMissing(registry.LOCAL_MACHINE, regPathShellIcons, regValueShellIconShield); err != nil {
-			return false
+			return reportErr("SetRemoveShield", err)
 		}
 	}
 	// 清除图标缓存，避免残留损坏的缓存条目导致图标黑块或不刷新
 	utils.ExecuteString(`Remove-Item "$env:LOCALAPPDATA\IconCache.db","$env:LOCALAPPDATA\Microsoft\Windows\Explorer\iconcache_*" -Force -ErrorAction SilentlyContinue`)
-	utils.RestartExplorer()
 	return true
 }
 
@@ -338,32 +324,41 @@ func SetOldTaskManager(enable bool) bool {
 	if GetOldTaskManagerStatus() == enable {
 		return true
 	}
-	var cmd string
+	source, target := taskManagerPath, taskManagerPath+".bak"
+	rename := func(from, to string) bool {
+		cmd := fmt.Sprintf(`Rename-Item -LiteralPath '%s' -NewName '%s' -Force`, from, filepath.Base(to))
+		return utils.SuperExecuteString(cmd)
+	}
 	if enable {
-		cmd = `Rename-Item -Path "C:\Windows\SystemResources\Windows.UI.TaskManager.bak" -NewName "Windows.UI.TaskManager" -Force`
-	} else {
-		cmd = `Rename-Item -Path "C:\Windows\SystemResources\Windows.UI.TaskManager" -NewName "Windows.UI.TaskManager.bak" -Force`
+		source, target = target, source
 	}
 
-	if !utils.SuperExecuteString(cmd) {
+	if !utils.ValidPSArg(source) || !utils.ValidPSArg(target) {
+		utils.Logf("[services] SetOldTaskManager 拒绝执行：路径含非法字符")
+		return false
+	}
+
+	if !rename(source, target) {
+		utils.Logf("[services] SetOldTaskManager 重命名失败: %s -> %s", source, target)
 		return false
 	}
 
 	// TrustedInstaller 提权可能较慢，轮询最多 6 秒确认重命名生效
-	source := taskManagerPath
-	if enable {
-		source = taskManagerPath + ".bak"
+	if waitFor(6*time.Second, func() bool {
+		_, err := os.Stat(source)
+		return os.IsNotExist(err)
+	}) {
+		return true
 	}
-	success := false
-	for i := 0; i < 20; i++ {
-		time.Sleep(300 * time.Millisecond)
-		if _, err := os.Stat(source); os.IsNotExist(err) {
-			success = true
-			break
-		}
+
+	// 超时后重新读取实际状态，已生效就不报失败（否则用户再点一次会把结果改回去）
+	if GetOldTaskManagerStatus() == enable {
+		return true
 	}
-	utils.RestartExplorer()
-	return success
+
+	utils.Logf("[services] SetOldTaskManager 超时且未生效，尝试回滚")
+	rename(target, source) // 失败或被打断时反向重命名，避免留下半成品
+	return false
 }
 
 // widgetsPolicyPath Windows 小组件组策略键（AllowNewsAndInterests=0 禁用）
@@ -377,10 +372,10 @@ func GetWidgetsStatus() bool {
 
 // DisableWidgets 禁用 Windows 小组件：写组策略键
 func DisableWidgets() bool {
-	return utils.RegSetDWordE(registry.LOCAL_MACHINE, widgetsPolicyPath, "AllowNewsAndInterests", 0) == nil
+	return reportErr("DisableWidgets", utils.RegSetDWordE(registry.LOCAL_MACHINE, widgetsPolicyPath, "AllowNewsAndInterests", 0))
 }
 
-// EnableWidgets 恢复 Windows 小组件：删除组策略键
+// EnableWidgets 恢复 Windows 小组件：删除组策略键（键本来不存在也算成功）
 func EnableWidgets() bool {
-	return utils.RegDeleteValueE(registry.LOCAL_MACHINE, widgetsPolicyPath, "AllowNewsAndInterests") == nil
+	return reportErr("EnableWidgets", deleteIgnoringMissing(registry.LOCAL_MACHINE, widgetsPolicyPath, "AllowNewsAndInterests"))
 }

@@ -3,6 +3,17 @@
     "zh": "中文",
     "en": "English"
   },
+  "common": {
+    "searchPlaceholder": "搜索设置（Ctrl+K）",
+    "searchEmpty": "没有匹配的设置",
+    "updateFailed": "修改失败，系统设置未生效",
+    "updateFailedDesc": "写入被安全软件或组策略拦截，详见日志 %LOCALAPPDATA%\\OptiWin\\logs\\app.log",
+    "explorerRestartHint": "需要重启资源管理器后生效",
+    "explorerRestarting": "正在重启资源管理器…",
+    "explorerRestartFailed": "重启失败：{err}",
+    "yes": "是",
+    "no": "否"
+  },
   "home": {
     "noUpdateNotes": "暂无更新说明",
     "newVersion": "发现新版本",
@@ -52,6 +63,14 @@
     "ifeoInvalidAbsPath": "调试器路径必须是绝对路径或环境变量路径（如 %windir%）",
     "ifeoUncPath": "不允许使用网络 UNC 路径",
     "ifeoPathTraversal": "不允许路径穿越（..）",
+    "dnsSwitched": "已切换到 {name}",
+    "dnsSwitchFailed": "DNS 切换失败",
+    "dnsAdapter": "网卡",
+    "dnsPrimary": "主 DNS",
+    "dnsSecondary": "副 DNS",
+    "dnsNotDetected": "未检测到",
+    "dnsNotSet": "未设置",
+    "defenderNote": "说明：",
     "privacy": "隐私",
     "telemetryTitle": "禁用系统遥测与推广",
     "telemetryDesc": "通过 IFEO 阻止 Windows 系统遥测和推广进程",
@@ -234,6 +253,9 @@
     "cpu": "处理器",
     "memory": "内存",
     "proxy": "代理",
-    "credits": "鸣谢"
+    "credits": "鸣谢",
+    "logs": "日志",
+    "openLogDir": "打开目录",
+    "logOpenFailed": "无法打开，请手动访问"
   }
 }

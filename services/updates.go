@@ -1,16 +1,18 @@
 //go:build windows
+
 package services
 
 import (
+	"OptiWin/utils"
 	"crypto/rand"
 	"encoding/json"
+	"errors"
 	"fmt"
+	"golang.org/x/sys/windows/registry"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
-	"golang.org/x/sys/windows/registry"
-	"OptiWin/utils"
 )
 
 func GetUpdateChannel() string {
@@ -39,35 +41,30 @@ func GetUpdateChannel() string {
 
 func SetUpdateChannel(channel string) bool {
 	path := `SOFTWARE\Microsoft\WindowsSelfHost\Applicability`
+	set := func(name, value string) error {
+		return utils.RegWriteStringE(registry.LOCAL_MACHINE, path, name, value)
+	}
+
+	var err error
 	switch channel {
 	case "retail":
-		utils.RegWriteString(registry.LOCAL_MACHINE, path, "Ring", "Retail")
-		utils.RegWriteString(registry.LOCAL_MACHINE, path, "ContentType", "Mainline")
-		k, err := registry.OpenKey(registry.LOCAL_MACHINE, path, registry.SET_VALUE)
-		if err == nil {
-			k.DeleteValue("BranchName")
-			k.Close()
-		}
+		err = errors.Join(
+			set("Ring", "Retail"),
+			set("ContentType", "Mainline"),
+			deleteIgnoringMissing(registry.LOCAL_MACHINE, path, "BranchName"),
+		)
 	case "ReleasePreview":
-		utils.RegWriteString(registry.LOCAL_MACHINE, path, "BranchName", "ReleasePreview")
-		utils.RegWriteString(registry.LOCAL_MACHINE, path, "Ring", "External")
-		utils.RegWriteString(registry.LOCAL_MACHINE, path, "ContentType", "Skip")
+		err = errors.Join(set("BranchName", "ReleasePreview"), set("Ring", "External"), set("ContentType", "Skip"))
 	case "Beta":
-		utils.RegWriteString(registry.LOCAL_MACHINE, path, "BranchName", "Beta")
-		utils.RegWriteString(registry.LOCAL_MACHINE, path, "Ring", "External")
-		utils.RegWriteString(registry.LOCAL_MACHINE, path, "ContentType", "Skip")
+		err = errors.Join(set("BranchName", "Beta"), set("Ring", "External"), set("ContentType", "Skip"))
 	case "Dev":
-		utils.RegWriteString(registry.LOCAL_MACHINE, path, "BranchName", "Dev")
-		utils.RegWriteString(registry.LOCAL_MACHINE, path, "Ring", "External")
-		utils.RegWriteString(registry.LOCAL_MACHINE, path, "ContentType", "Skip")
+		err = errors.Join(set("BranchName", "Dev"), set("Ring", "External"), set("ContentType", "Skip"))
 	case "Canary":
-		utils.RegWriteString(registry.LOCAL_MACHINE, path, "BranchName", "Canary")
-		utils.RegWriteString(registry.LOCAL_MACHINE, path, "Ring", "WIS")
-		utils.RegWriteString(registry.LOCAL_MACHINE, path, "ContentType", "Skip")
+		err = errors.Join(set("BranchName", "Canary"), set("Ring", "WIS"), set("ContentType", "Skip"))
 	default:
 		return false
 	}
-	return true
+	return reportErr("SetUpdateChannel", err)
 }
 
 func GetPauseUpdatesStatus() bool {
@@ -82,18 +79,23 @@ func GetPauseUpdatesStatus() bool {
 }
 
 func EnablePauseUpdates() bool {
-	k, _, _ := registry.CreateKey(registry.LOCAL_MACHINE,
+	k, _, err := registry.CreateKey(registry.LOCAL_MACHINE,
 		`SOFTWARE\Microsoft\WindowsUpdate\UX\Settings`, registry.SET_VALUE)
+	if err != nil {
+		return reportErr("EnablePauseUpdates", err)
+	}
 	defer k.Close()
 
-	k.SetDWordValue("FlightSettingsMaxPauseDays", 37200)
-	k.SetStringValue("PauseFeatureUpdatesStartTime", "2023-08-17T12:47:51Z")
-	k.SetStringValue("PauseFeatureUpdatesEndTime", "2126-01-01T00:00:00Z")
-	k.SetStringValue("PauseQualityUpdatesStartTime", "2023-08-17T12:47:51Z")
-	k.SetStringValue("PauseQualityUpdatesEndTime", "2126-01-01T00:00:00Z")
-	k.SetStringValue("PauseUpdatesStartTime", "2023-08-17T12:47:51Z")
-	k.SetStringValue("PauseUpdatesExpiryTime", "2126-01-01T00:00:00Z")
-	return true
+	err = errors.Join(
+		k.SetDWordValue("FlightSettingsMaxPauseDays", 37200),
+		k.SetStringValue("PauseFeatureUpdatesStartTime", "2023-08-17T12:47:51Z"),
+		k.SetStringValue("PauseFeatureUpdatesEndTime", "2126-01-01T00:00:00Z"),
+		k.SetStringValue("PauseQualityUpdatesStartTime", "2023-08-17T12:47:51Z"),
+		k.SetStringValue("PauseQualityUpdatesEndTime", "2126-01-01T00:00:00Z"),
+		k.SetStringValue("PauseUpdatesStartTime", "2023-08-17T12:47:51Z"),
+		k.SetStringValue("PauseUpdatesExpiryTime", "2126-01-01T00:00:00Z"),
+	)
+	return reportErr("EnablePauseUpdates", err)
 }
 
 func DisablePauseUpdates() bool {
@@ -210,29 +212,33 @@ func GetDriverUpdatesStatus() bool {
 }
 
 func EnableDriverUpdates() bool {
-	utils.RegSetDWord(registry.LOCAL_MACHINE,
-		`SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata`,
-		"PreventDeviceMetadataFromNetwork", 0)
-	utils.RegDeleteValue(registry.LOCAL_MACHINE,
-		`SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate`,
-		"ExcludeWUDriversInQualityUpdate")
-	utils.RegDeleteValue(registry.LOCAL_MACHINE,
-		`SOFTWARE\Microsoft\WindowsUpdate\UX\Settings`,
-		"ExcludeWUDriversInQualityUpdate")
-	return true
+	err := errors.Join(
+		utils.RegSetDWordE(registry.LOCAL_MACHINE,
+			`SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata`,
+			"PreventDeviceMetadataFromNetwork", 0),
+		deleteIgnoringMissing(registry.LOCAL_MACHINE,
+			`SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate`,
+			"ExcludeWUDriversInQualityUpdate"),
+		deleteIgnoringMissing(registry.LOCAL_MACHINE,
+			`SOFTWARE\Microsoft\WindowsUpdate\UX\Settings`,
+			"ExcludeWUDriversInQualityUpdate"),
+	)
+	return reportErr("EnableDriverUpdates", err)
 }
 
 func DisableDriverUpdates() bool {
-	utils.RegSetDWord(registry.LOCAL_MACHINE,
-		`SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata`,
-		"PreventDeviceMetadataFromNetwork", 1)
-	utils.RegSetDWord(registry.LOCAL_MACHINE,
-		`SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate`,
-		"ExcludeWUDriversInQualityUpdate", 1)
-	utils.RegSetDWord(registry.LOCAL_MACHINE,
-		`SOFTWARE\Microsoft\WindowsUpdate\UX\Settings`,
-		"ExcludeWUDriversInQualityUpdate", 1)
-	return true
+	err := errors.Join(
+		utils.RegSetDWordE(registry.LOCAL_MACHINE,
+			`SOFTWARE\Microsoft\Windows\CurrentVersion\Device Metadata`,
+			"PreventDeviceMetadataFromNetwork", 1),
+		utils.RegSetDWordE(registry.LOCAL_MACHINE,
+			`SOFTWARE\Policies\Microsoft\Windows\WindowsUpdate`,
+			"ExcludeWUDriversInQualityUpdate", 1),
+		utils.RegSetDWordE(registry.LOCAL_MACHINE,
+			`SOFTWARE\Microsoft\WindowsUpdate\UX\Settings`,
+			"ExcludeWUDriversInQualityUpdate", 1),
+	)
+	return reportErr("DisableDriverUpdates", err)
 }
 
 // --- 保留原有内容 ---

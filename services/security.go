@@ -5,6 +5,7 @@ package services
 import (
 	"OptiWin/utils"
 	"encoding/json"
+	"errors"
 	"fmt"
 	"os/exec"
 	"strings"
@@ -20,11 +21,11 @@ const defenderPolicyPath = `SOFTWARE\Policies\Microsoft\Windows Defender`
 
 // realtimeProtectionValues 实时保护全部组策略开关（1=禁用）
 var realtimeProtectionValues = []string{
-	"DisableRealtimeMonitoring",     // 实时监控
-	"DisableBehaviorMonitoring",     // 行为监控
-	"DisableOnAccessProtection",     // 访问时保护
-	"DisableIOAVProtection",         // 下载/附件扫描
-	"DisableScanOnRealtimeEnable",   // 实时保护启用时扫描
+	"DisableRealtimeMonitoring",        // 实时监控
+	"DisableBehaviorMonitoring",        // 行为监控
+	"DisableOnAccessProtection",        // 访问时保护
+	"DisableIOAVProtection",            // 下载/附件扫描
+	"DisableScanOnRealtimeEnable",      // 实时保护启用时扫描
 	"DisableIntrusionPreventionSystem", // 入侵防护系统
 }
 
@@ -108,18 +109,24 @@ func GetUacStatus() bool {
 }
 
 func EnableUac() bool {
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System`, "EnableLUA", 1)
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System`, "EnableVirtualization", 1)
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System`, "EnableInstallerDetection", 1)
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System`, "PromptOnSecureDesktop", 1)
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System`, "ConsentPromptBehaviorAdmin", 2)
-	return true
+	const path = `SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System`
+	err := errors.Join(
+		utils.RegSetDWordE(registry.LOCAL_MACHINE, path, "EnableLUA", 1),
+		utils.RegSetDWordE(registry.LOCAL_MACHINE, path, "EnableVirtualization", 1),
+		utils.RegSetDWordE(registry.LOCAL_MACHINE, path, "EnableInstallerDetection", 1),
+		utils.RegSetDWordE(registry.LOCAL_MACHINE, path, "PromptOnSecureDesktop", 1),
+		utils.RegSetDWordE(registry.LOCAL_MACHINE, path, "ConsentPromptBehaviorAdmin", 2),
+	)
+	return reportErr("EnableUac", err)
 }
 
 func DisableUac() bool {
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System`, "EnableLUA", 0)
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System`, "ConsentPromptBehaviorAdmin", 0)
-	return true
+	const path = `SOFTWARE\Microsoft\Windows\CurrentVersion\Policies\System`
+	err := errors.Join(
+		utils.RegSetDWordE(registry.LOCAL_MACHINE, path, "EnableLUA", 0),
+		utils.RegSetDWordE(registry.LOCAL_MACHINE, path, "ConsentPromptBehaviorAdmin", 0),
+	)
+	return reportErr("DisableUac", err)
 }
 
 func GetVbsStatus() bool {
@@ -134,15 +141,19 @@ func GetVbsStatus() bool {
 }
 
 func EnableVbs() bool {
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SOFTWARE\Policies\Microsoft\Windows\DeviceGuard`, "EnableVirtualizationBasedSecurity", 1)
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SYSTEM\ControlSet001\Control\DeviceGuard`, "EnableVirtualizationBasedSecurity", 1)
-	return true
+	err := errors.Join(
+		utils.RegSetDWordE(registry.LOCAL_MACHINE, `SOFTWARE\Policies\Microsoft\Windows\DeviceGuard`, "EnableVirtualizationBasedSecurity", 1),
+		utils.RegSetDWordE(registry.LOCAL_MACHINE, `SYSTEM\ControlSet001\Control\DeviceGuard`, "EnableVirtualizationBasedSecurity", 1),
+	)
+	return reportErr("EnableVbs", err)
 }
 
 func DisableVbs() bool {
-	utils.RegDeleteValue(registry.LOCAL_MACHINE, `SOFTWARE\Policies\Microsoft\Windows\DeviceGuard`, "EnableVirtualizationBasedSecurity")
-	utils.RegDeleteValue(registry.LOCAL_MACHINE, `SYSTEM\ControlSet001\Control\DeviceGuard`, "EnableVirtualizationBasedSecurity")
-	return true
+	err := errors.Join(
+		deleteIgnoringMissing(registry.LOCAL_MACHINE, `SOFTWARE\Policies\Microsoft\Windows\DeviceGuard`, "EnableVirtualizationBasedSecurity"),
+		deleteIgnoringMissing(registry.LOCAL_MACHINE, `SYSTEM\ControlSet001\Control\DeviceGuard`, "EnableVirtualizationBasedSecurity"),
+	)
+	return reportErr("DisableVbs", err)
 }
 
 func GetMemoryIntegrityStatus() bool {
@@ -152,65 +163,19 @@ func GetMemoryIntegrityStatus() bool {
 }
 
 func EnableMemoryIntegrity() bool {
-	utils.RegSetDWord(registry.LOCAL_MACHINE,
+	err := utils.RegSetDWordE(registry.LOCAL_MACHINE,
 		`SYSTEM\ControlSet001\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity`, "Enabled", 1)
-	return true
+	return reportErr("EnableMemoryIntegrity", err)
 }
 
 func DisableMemoryIntegrity() bool {
-	utils.RegSetDWord(registry.LOCAL_MACHINE,
+	err := utils.RegSetDWordE(registry.LOCAL_MACHINE,
 		`SYSTEM\ControlSet001\Control\DeviceGuard\Scenarios\HypervisorEnforcedCodeIntegrity`, "Enabled", 0)
-	return true
+	return reportErr("DisableMemoryIntegrity", err)
 }
 
 // -----IEFO
 const ifeoPath = `SOFTWARE\Microsoft\Windows NT\CurrentVersion\Image File Execution Options`
-
-var ifeoBlockedExecutables = map[string]bool{
-	"winlogon.exe":      true,
-	"csrss.exe":         true,
-	"lsass.exe":         true,
-	"smss.exe":          true,
-	"services.exe":      true,
-	"svchost.exe":       true,
-	"explorer.exe":      true,
-	"dwm.exe":           true,
-	"wininit.exe":       true,
-	"fontdrvhost.exe":   true,
-	"sihost.exe":        true,
-	"RuntimeBroker.exe": true,
-}
-
-func isValidIfeoExeName(name string) bool {
-	if name == "" || !strings.HasSuffix(strings.ToLower(name), ".exe") {
-		return false
-	}
-	if strings.ContainsAny(name, `\/:;*?<>|`) {
-		return false
-	}
-	if ifeoBlockedExecutables[strings.ToLower(name)] {
-		return false
-	}
-	return true
-}
-
-func isValidDebuggerPath(path string) bool {
-	if path == "" {
-		return true
-	}
-	lower := strings.ToLower(path)
-	// 允许环境变量路径（%windir%、%systemroot% 等）或盘符绝对路径
-	if !strings.Contains(lower, `:\`) && !strings.Contains(lower, `%`) {
-		return false
-	}
-	if strings.HasPrefix(lower, `\\`) {
-		return false
-	}
-	if strings.Contains(lower, "..") {
-		return false
-	}
-	return true
-}
 
 type ifeoEntry struct {
 	Name       string `json:"name"`
@@ -230,7 +195,7 @@ func ListIfeoEntries() string {
 		return "[]"
 	}
 
-	var entries []ifeoEntry
+	entries := []ifeoEntry{}
 	for _, name := range subKeys {
 		subKey, err := registry.OpenKey(key, name, registry.READ)
 		if err != nil {
@@ -289,6 +254,10 @@ func RemoveIfeoEntry(exeName string) bool {
 	defer parentKey.Close()
 
 	err = registry.DeleteKey(parentKey, exeName)
+	// 条目本来就不存在 = 已经是目标状态，不算失败
+	if errors.Is(err, registry.ErrNotExist) {
+		return true
+	}
 	return err == nil
 }
 

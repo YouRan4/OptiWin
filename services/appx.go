@@ -101,15 +101,29 @@ $ErrorActionPreference = 'SilentlyContinue'
 $fullName = '` + escaped + `'
 $name = ($fullName -split '_')[0]
 
-# 1. 结束该应用相关进程
-Get-Process | Where-Object { $_.Name -like "*$name*" } | Stop-Process -Force
+# 1. 只结束属于该包自己的进程：用清单里的可执行名精确匹配，
+#    而不是按包名子串匹配（后者会误杀名称含相同子串的无关进程）
+$pkg = Get-AppxPackage -Package $fullName
+if (-not $pkg) { $pkg = Get-AppxPackage -AllUsers -Package $fullName }
+$exeNames = @()
+if ($pkg) {
+  $manifest = Get-AppxPackageManifest -Package $pkg
+  if ($manifest) {
+    $exeNames = @($manifest.Package.Applications.Application | ForEach-Object {
+      [System.IO.Path]::GetFileNameWithoutExtension($_.Executable)
+    }) | Where-Object { $_ }
+  }
+}
+if ($exeNames.Count -gt 0) {
+  Get-Process | Where-Object { $exeNames -contains $_.Name } | Stop-Process -Force
+}
 
 # 2. 移除当前用户及所有用户的包
 Remove-AppxPackage -Package $fullName -Confirm:$false
 Remove-AppxPackage -Package $fullName -AllUsers -Confirm:$false
 
-# 3. 移除系统预置包（防止重装/新用户再次出现）
-Get-AppxProvisionedPackage -Online | Where-Object { $_.PackageName -like "*$name*" } |
+# 3. 移除系统预置包（防止重装/新用户再次出现），按包名前缀精确匹配
+Get-AppxProvisionedPackage -Online | Where-Object { $_.PackageName -like "${name}_*" } |
     Remove-AppxProvisionedPackage -Online
 
 # 4. 校验是否已彻底卸载
@@ -118,5 +132,10 @@ exit 0
 `
 	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass", "-Command", psScript)
 	utils.HideWindow(cmd)
-	return cmd.Run() == nil
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		utils.Logf("[services] UninstallAppx 失败: %v | 输出: %s", err, strings.TrimSpace(string(out)))
+		return false
+	}
+	return true
 }

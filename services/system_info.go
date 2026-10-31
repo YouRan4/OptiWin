@@ -3,15 +3,16 @@
 package services
 
 import (
+	"OptiWin/utils"
 	"encoding/json"
 	"fmt"
+	"golang.org/x/sys/windows/registry"
 	"math"
 	"net"
+	"strconv"
 	"strings"
 	"syscall"
 	"unsafe"
-	"golang.org/x/sys/windows/registry"
-	"OptiWin/utils"
 )
 
 type systemInfo struct {
@@ -40,14 +41,17 @@ var procGlobalMemory = kernel32.NewProc("GlobalMemoryStatusEx")
 
 func GetSystemInfo() string {
 	info := systemInfo{
-		OS:   getOS(),
+		OS:    getOS(),
 		Build: getBuild(),
-		CPU:  getCPU(),
-		RAM:  getRAM(),
-		IPv4: getIPv4(),
-		IPv6: getIPv6(),
+		CPU:   getCPU(),
+		RAM:   getRAM(),
+		IPv4:  getIPv4(),
+		IPv6:  getIPv6(),
 	}
-	result, _ := json.Marshal(info)
+	result, err := json.Marshal(info)
+	if err != nil {
+		return "{}"
+	}
 	return string(result)
 }
 
@@ -60,7 +64,7 @@ func getOS() string {
 		`SOFTWARE\Microsoft\Windows NT\CurrentVersion`, "CurrentBuild")
 
 	// Windows 11 开始 build >= 22000，但 ProductName 依然写 "Windows 10"
-	if build >= "22000" {
+	if n, err := strconv.Atoi(build); err == nil && n >= 22000 {
 		name = strings.Replace(name, "Windows 10", "Windows 11", 1)
 	}
 

@@ -3,11 +3,11 @@
 package utils
 
 import (
+	"golang.org/x/sys/windows/registry"
 	"net/http"
 	"net/url"
 	"strings"
 	"time"
-	"golang.org/x/sys/windows/registry"
 )
 
 var httpClient = &http.Client{

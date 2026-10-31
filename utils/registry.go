@@ -5,9 +5,63 @@ package utils
 import (
 	"errors"
 	"fmt"
+	"os"
+	"path/filepath"
+	"sort"
+	"strings"
+	"time"
 
 	"golang.org/x/sys/windows/registry"
 )
+
+// Logf 追加一条日志到 %LOCALAPPDATA%\OptiWin\logs\app.log；日志写入失败时静默跳过
+func Logf(format string, args ...any) {
+	logDir := LogDir()
+	if err := os.MkdirAll(logDir, 0755); err != nil {
+		return
+	}
+	logPath := filepath.Join(logDir, logFileName)
+	rotateLog(logDir, logPath)
+	f, err := os.OpenFile(logPath, os.O_CREATE|os.O_APPEND|os.O_WRONLY, 0644)
+	if err != nil {
+		return
+	}
+	defer f.Close()
+	fmt.Fprintf(f, "%s %s\n", time.Now().Format("2006-01-02 15:04:05"), fmt.Sprintf(format, args...))
+}
+
+// rotateLog 在 app.log 超过 1MB 时重命名为带时间戳的 app-<20060102-150405>.log，
+// 并只保留最近 5 个滚动文件；重命名失败（如文件被占用）时继续追写原文件
+func rotateLog(logDir, logPath string) {
+	info, err := os.Stat(logPath)
+	if err != nil || info.Size() < logMaxBytes {
+		return
+	}
+	rotated := "app-" + time.Now().Format("20060102-150405") + ".log"
+	if err := os.Rename(logPath, filepath.Join(logDir, rotated)); err != nil {
+		return
+	}
+	pruneRolledLogs(logDir)
+}
+
+func pruneRolledLogs(logDir string) {
+	entries, err := os.ReadDir(logDir)
+	if err != nil {
+		return
+	}
+	var rolled []string
+	for _, e := range entries {
+		name := e.Name()
+		if !e.IsDir() && strings.HasPrefix(name, "app-") && strings.HasSuffix(name, ".log") {
+			rolled = append(rolled, name)
+		}
+	}
+	// 文件名里的时间戳可直接按字典序比较，等价于按时间排序
+	sort.Strings(rolled)
+	for _, name := range rolled[:max(0, len(rolled)-logKeepRolled)] {
+		_ = os.Remove(filepath.Join(logDir, name))
+	}
+}
 
 func RegReadDWord(key registry.Key, path, name string) (uint64, error) {
 	k, err := registry.OpenKey(key, path, registry.QUERY_VALUE)
@@ -28,10 +82,6 @@ func RegReadString(key registry.Key, path, name string) (string, uint32, error) 
 	return k.GetStringValue(name)
 }
 
-func RegWriteString(key registry.Key, path, name, value string) bool {
-	return RegWriteStringE(key, path, name, value) == nil
-}
-
 func RegWriteStringE(key registry.Key, path, name, value string) error {
 	k, _, err := registry.CreateKey(key, path, registry.SET_VALUE)
 	if err != nil {
@@ -39,10 +89,6 @@ func RegWriteStringE(key registry.Key, path, name, value string) error {
 	}
 	defer k.Close()
 	return k.SetStringValue(name, value)
-}
-
-func RegDeleteValue(key registry.Key, path, name string) {
-	_ = RegDeleteValueE(key, path, name)
 }
 
 func RegDeleteValueE(key registry.Key, path, name string) error {
@@ -76,10 +122,6 @@ func RegDeleteKeyE(hive registry.Key, path string) error {
 	return registry.DeleteKey(hive, path)
 }
 
-func RegSetDWord(key registry.Key, path, name string, value uint32) {
-	_ = RegSetDWordE(key, path, name, value)
-}
-
 func RegSetDWordE(key registry.Key, path, name string, value uint32) error {
 	k, err := registry.OpenKey(key, path, registry.SET_VALUE)
 	if err != nil {
@@ -90,11 +132,6 @@ func RegSetDWordE(key registry.Key, path, name string, value uint32) error {
 	}
 	defer k.Close()
 	return k.SetDWordValue(name, value)
-}
-
-func RegSetDWordBool(key registry.Key, path, name string, value uint32) bool {
-	RegSetDWord(key, path, name, value)
-	return true
 }
 
 func GetSystemAccentColor() string {

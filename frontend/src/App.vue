@@ -4,6 +4,9 @@ import { ref, onMounted, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NConfigProvider, darkTheme, zhCN, dateZhCN, enUS, dateEnUS, NNotificationProvider, NDialogProvider } from 'naive-ui'
 import { Home, Shield, Zap, Palette, Wrench, Download, Package } from 'lucide-vue-next'
+import { explorerRestartPrompt } from './composables/useExplorerRestartPrompt'
+import GlobalSearch from './components/GlobalSearch.vue'
+import { RestartExplorer } from '../wailsjs/go/main/App'
 
 const iconMap: Record<string, any> = {
   home: Home,
@@ -20,6 +23,33 @@ const route = useRoute()
 const { t: i18n, locale } = useI18n()
 
 const isDark = ref(true)
+
+const explorerRestartPending = explorerRestartPrompt.pending
+const restartBusy = ref(false)
+
+async function restartExplorer() {
+  if (restartBusy.value) return false
+  restartBusy.value = true
+  try {
+    const msg = await RestartExplorer()
+    if (msg) {
+      explorerRestartPrompt.fail(msg)
+      return false
+    }
+    return true
+  } catch (e) {
+    explorerRestartPrompt.fail(String(e))
+    return false
+  } finally {
+    restartBusy.value = false
+  }
+}
+
+async function confirmExplorerRestart() {
+  if (await restartExplorer()) {
+    explorerRestartPrompt.dismiss()
+  }
+}
 
 onMounted(async () => {
   const mq = window.matchMedia('(prefers-color-scheme: dark)')
@@ -66,8 +96,8 @@ function navigate(path: string) {
 function wm() { (window as any).runtime?.WindowMinimise() }
 function wq() { (window as any).runtime?.Quit() }
 
-function reExplorer() {
-  import('../wailsjs/go/main/App').then(m => m.RestartExplorer()).catch(() => {})
+async function reExplorer() {
+  await restartExplorer()
 }
 </script>
 
@@ -92,6 +122,7 @@ function reExplorer() {
           </div>
         </nav>
         <div class="t-right" style="--wails-draggable: no-drag">
+          <GlobalSearch />
           <button class="tb-btn" @click="reExplorer" :title="i18n('nav.restartExplorer')">&#x21BB;</button>
           <button class="tb-btn" @click="wm">&#x2014;</button>
           <button class="tb-btn tb-close" style="--wails-draggable:no-drag" @click="wq">&#x2715;</button>
@@ -105,6 +136,21 @@ function reExplorer() {
             </transition>
           </router-view>
         </main>
+      </div>
+      <div v-if="explorerRestartPending" class="restart-bar">
+        <span class="restart-text" :class="{ 'restart-text--error': explorerRestartPrompt.error }">
+          {{
+            explorerRestartPrompt.error
+              ? i18n('common.explorerRestartFailed', { err: explorerRestartPrompt.error })
+              : restartBusy
+                ? i18n('common.explorerRestarting')
+                : i18n('common.explorerRestartHint')
+          }}
+        </span>
+        <div class="restart-actions">
+          <button class="restart-btn restart-btn--primary" :disabled="restartBusy" @click="confirmExplorerRestart">{{ i18n('common.yes') }}</button>
+          <button class="restart-btn" @click="explorerRestartPrompt.dismiss()">{{ i18n('common.no') }}</button>
+        </div>
       </div>
     </div>
     </n-notification-provider>
@@ -189,6 +235,36 @@ a:hover { text-decoration: underline; }
 /* 主内容区 */
 .body { display: flex; flex: 1; overflow: hidden; background: transparent; }
 .content { flex: 1; overflow-y: auto; padding: 32px 40px; }
+
+.row-label.search-hit {
+  animation: search-hit 1.8s ease-out;
+  border-radius: 4px;
+}
+@keyframes search-hit {
+  0% { background: var(--accent); color: #fff; }
+  100% { background: transparent; color: inherit; }
+}
+
+/* 重启资源管理器提示条 */
+.restart-bar {
+  position: fixed; left: 50%; bottom: 24px; transform: translateX(-50%);
+  z-index: 9000; display: flex; align-items: center; gap: 16px;
+  padding: 14px 20px; border-radius: 16px;
+  background: var(--card-bg); border: 1px solid var(--border);
+  box-shadow: 0 8px 32px rgba(0,0,0,0.3);
+}
+.restart-text { font-size: 14px; color: var(--text); }
+.restart-text--error { color: #e81123; }
+.restart-actions { display: flex; gap: 8px; }
+.restart-btn {
+  font-family: inherit; font-size: 14px; cursor: pointer;
+  padding: 6px 18px; border-radius: 8px;
+  background: var(--section-bg); color: var(--text); border: 1px solid var(--border);
+}
+.restart-btn:hover { background: var(--hover); }
+.restart-btn:disabled { opacity: 0.5; cursor: default; }
+.restart-btn--primary { background: var(--accent); border-color: transparent; color: #fff; }
+.restart-btn--primary:hover { background: var(--accent); opacity: 0.85; }
 
 /* 全局重置 */
 * { margin: 0; padding: 0; box-sizing: border-box; }

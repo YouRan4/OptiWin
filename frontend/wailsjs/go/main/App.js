@@ -318,12 +318,24 @@ export function InstallWebView2() {
   return window['go']['main']['App']['InstallWebView2']();
 }
 
+export function LastError() {
+  return window['go']['main']['App']['LastError']();
+}
+
 export function ListAppxPackages() {
   return window['go']['main']['App']['ListAppxPackages']();
 }
 
 export function ListIfeoEntries() {
   return window['go']['main']['App']['ListIfeoEntries']();
+}
+
+export function LogDir() {
+  return window['go']['main']['App']['LogDir']();
+}
+
+export function OpenLogDir() {
+  return window['go']['main']['App']['OpenLogDir']();
 }
 
 export function OpenWindowsSecurity() {

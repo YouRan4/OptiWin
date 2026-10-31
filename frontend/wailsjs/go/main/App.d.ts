@@ -159,9 +159,15 @@ export function InstallEdge():Promise<string>;
 
 export function InstallWebView2():Promise<string>;
 
+export function LastError():Promise<string>;
+
 export function ListAppxPackages():Promise<string>;
 
 export function ListIfeoEntries():Promise<string>;
+
+export function LogDir():Promise<string>;
+
+export function OpenLogDir():Promise<boolean>;
 
 export function OpenWindowsSecurity():Promise<boolean>;
 

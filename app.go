@@ -4,8 +4,10 @@ import (
 	"context"
 	_ "embed"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"strings"
 
 	"OptiWin/services"
 	"OptiWin/utils"
@@ -22,6 +24,9 @@ func NewApp() *App {
 func (a *App) GetCurrentVersion() string { return CurrentVersion }
 func (a *App) GetSystemInfo() string     { return services.GetSystemInfo() }
 func (a *App) GetProxyInfo() string      { return utils.GetProxyInfo() }
+func (a *App) LastError() string         { return utils.TakeLastError() }
+func (a *App) LogDir() string            { return utils.LogDir() }
+func (a *App) OpenLogDir() bool          { return utils.OpenLogDir() }
 
 const StatusUpToDate = "same"
 
@@ -37,38 +42,56 @@ var githubReleaseMirrors = []string{
 
 func (a *App) CheckUpdate() string {
 	// 多源回退：官方源优先（已配置代理的用户直接成功），失败后尝试国内镜像
+	var reasons []string
 	for _, url := range append([]string{githubReleaseAPI}, githubReleaseMirrors...) {
-		result := fetchRelease(url)
-		if result != "" {
-			return result
+		result, err := fetchRelease(url)
+		if err != nil {
+			reasons = append(reasons, err.Error())
+			utils.Logf("[update] 检查更新失败 %s: %v", url, err)
+			continue
 		}
+		return result
+	}
+
+	// 官方源限流时回退镜像通常也失败，单独提示更准
+	for _, r := range reasons {
+		if strings.Contains(r, "限流") {
+			return "err:GitHub 接口限流，请稍后再试"
+		}
+	}
+	if len(reasons) > 0 {
+		// 每个源都失败：给出官方源的原始原因
+		return "err:" + reasons[0]
 	}
 	return "err:无法连接 GitHub（官方与镜像均不可达）"
 }
 
-// fetchRelease 从指定 URL 获取最新 release 信息，失败返回空字符串
-func fetchRelease(url string) string {
+// fetchRelease 从指定 URL 获取最新 release 信息；失败时返回带原因的错误
+func fetchRelease(url string) (string, error) {
 	client := utils.GetHTTPClient()
 	req, err := http.NewRequest("GET", url, nil)
 	if err != nil {
-		return ""
+		return "", fmt.Errorf("构造请求失败: %w", err)
 	}
 	req.Header.Set("User-Agent", "OptiWin/1.0")
 	req.Header.Set("Accept", "application/vnd.github.v3+json")
 
 	resp, err := client.Do(req)
 	if err != nil {
-		return ""
+		return "", fmt.Errorf("网络不可达: %w", err)
 	}
 	defer resp.Body.Close()
 
 	if resp.StatusCode != http.StatusOK {
-		return ""
+		if resp.StatusCode == http.StatusForbidden || resp.StatusCode == http.StatusTooManyRequests {
+			return "", fmt.Errorf("GitHub 接口限流 (HTTP %d)", resp.StatusCode)
+		}
+		return "", fmt.Errorf("服务返回 HTTP %d", resp.StatusCode)
 	}
 
 	b, err := io.ReadAll(resp.Body)
 	if err != nil {
-		return ""
+		return "", fmt.Errorf("读取响应失败: %w", err)
 	}
 
 	var release struct {
@@ -77,15 +100,19 @@ func fetchRelease(url string) string {
 		HTMLURL string `json:"html_url"`
 	}
 	if err := json.Unmarshal(b, &release); err != nil {
-		return ""
+		return "", fmt.Errorf("响应解析失败: %w", err)
 	}
 
 	if release.TagName == "" {
-		return ""
+		return "", fmt.Errorf("响应中缺少 tag_name")
 	}
 
-	if compareVersion(CurrentVersion, release.TagName) >= 0 {
-		return StatusUpToDate
+	cmp, err := compareVersion(CurrentVersion, release.TagName)
+	if err != nil {
+		return "", err
+	}
+	if cmp >= 0 {
+		return StatusUpToDate, nil
 	}
 
 	result, err := json.Marshal(map[string]string{
@@ -94,9 +121,9 @@ func fetchRelease(url string) string {
 		"url":     release.HTMLURL,
 	})
 	if err != nil {
-		return ""
+		return "", fmt.Errorf("序列化失败: %w", err)
 	}
-	return string(result)
+	return string(result), nil
 }
 
 // --- 更新通道 ---
@@ -167,12 +194,12 @@ func (a *App) RemoveGameBar() bool  { return services.RemoveGameBar() }
 func (a *App) RestoreGameBar() bool { return services.RestoreGameBar() }
 
 // --- 实时扫描 ---
-func (a *App) GetCoreServicesDisabled() bool       { return services.GetCoreServicesDisabled() }
-func (a *App) DisableCoreServices() bool           { return services.DisableCoreServices() }
-func (a *App) EnableCoreServices() bool            { return services.EnableCoreServices() }
-func (a *App) GetTamperProtectionStatus() bool     { return services.GetTamperProtectionStatus() }
-func (a *App) GetRealtimeProtectionEnabled() bool  { return services.GetRealtimeProtectionEnabled() }
-func (a *App) OpenWindowsSecurity() bool           { return services.OpenWindowsSecurity() }
+func (a *App) GetCoreServicesDisabled() bool      { return services.GetCoreServicesDisabled() }
+func (a *App) DisableCoreServices() bool          { return services.DisableCoreServices() }
+func (a *App) EnableCoreServices() bool           { return services.EnableCoreServices() }
+func (a *App) GetTamperProtectionStatus() bool    { return services.GetTamperProtectionStatus() }
+func (a *App) GetRealtimeProtectionEnabled() bool { return services.GetRealtimeProtectionEnabled() }
+func (a *App) OpenWindowsSecurity() bool          { return services.OpenWindowsSecurity() }
 
 // --- UAC ---
 func (a *App) GetUacStatus() bool { return services.GetUacStatus() }
@@ -261,8 +288,10 @@ func (a *App) GetSystemAccentColor() string {
 
 // --- 重启资源管理器 ---
 func (a *App) RestartExplorer() string {
-	utils.RestartExplorer()
-	return "资源管理器已重启"
+	if err := utils.RestartExplorer(); err != nil {
+		return err.Error()
+	}
+	return ""
 }
 
 // --- Appx 应用管理 ---

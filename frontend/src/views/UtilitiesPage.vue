@@ -12,13 +12,21 @@ import {
 } from '../../wailsjs/go/main/App'
 
 import { useNotify } from '../composables/useNotify'
+import { useBackendToggle } from '../composables/useBackendToggle'
 
 const { t: i18n } = useI18n()
 const notify = useNotify()
 
-const hibernate = ref(false)
-const fastStartup = ref(true)
-const photoViewer = ref(false)
+const { value: hibernate, refresh: refreshHibernate, onUpdate: onHibernate, busy: hibernateBusy } = useBackendToggle(
+  GetHibernateStatus, v => (v ? EnableHibernate() : DisableHibernate()), () => i18n('util.hibernate'),
+)
+const { value: fastStartup, refresh: refreshFastStartup, onUpdate: onFastStartup, busy: fastStartupBusy } = useBackendToggle(
+  GetFastStartupStatus, v => (v ? EnableFastStartup() : DisableFastStartup()), () => i18n('util.fastStartup'),
+)
+const { value: photoViewer, refresh: refreshPhotoViewer, onUpdate: onPhotoViewer, busy: photoViewerBusy } = useBackendToggle(
+  GetPhotoViewerStatus, v => (v ? EnablePhotoViewer() : DisablePhotoViewer()), () => i18n('util.photoViewer'),
+)
+
 const webviewVer = ref('')
 const showBootConfirm = ref(false)
 const pendingBootMode = ref('')
@@ -26,26 +34,9 @@ const pendingBootTitle = ref('')
 const pendingBootDesc = ref('')
 
 onMounted(async () => {
-  hibernate.value = await GetHibernateStatus()
-  fastStartup.value = await GetFastStartupStatus()
-  photoViewer.value = await GetPhotoViewerStatus()
+  await Promise.all([refreshHibernate(), refreshFastStartup(), refreshPhotoViewer()])
   webviewVer.value = await GetWebView2Version()
 })
-
-async function onHibernate(v: boolean) {
-  if (v) await EnableHibernate(); else await DisableHibernate()
-  hibernate.value = await GetHibernateStatus()
-}
-
-async function onFastStartup(v: boolean) {
-  if (v) await EnableFastStartup(); else await DisableFastStartup()
-  fastStartup.value = await GetFastStartupStatus()
-}
-
-async function onPhotoViewer(v: boolean) {
-  if (v) await EnablePhotoViewer(); else await DisablePhotoViewer()
-  photoViewer.value = await GetPhotoViewerStatus()
-}
 
 async function onUninstallEdge() {
   const msg = await UninstallEdge()
@@ -82,11 +73,22 @@ function onBootClick(mode: string) {
 async function confirmBoot() {
   showBootConfirm.value = false
   if (pendingBootMode.value === 'bios') {
-    await RebootToBios()
-  } else {
-    await SetSafeBoot(pendingBootMode.value)
-    await RebootSystem()
+    if (!(await RebootToBios())) {
+      notify.create({ title: i18n('common.updateFailed'), description: i18n('util.bootBios'), type: 'error', duration: 6000 })
+    }
+    return
   }
+  const ok = await SetSafeBoot(pendingBootMode.value)
+  if (!ok) {
+    notify.create({
+      title: i18n('common.updateFailed'),
+      description: `${i18n('util.bootOptions')}：${i18n('common.updateFailedDesc')}`,
+      type: 'error',
+      duration: 8000,
+    })
+    return
+  }
+  await RebootSystem()
 }
 </script>
 
@@ -96,18 +98,18 @@ async function confirmBoot() {
       <div class="setting-card-header setting-card-header--flat"><span class="header-title">{{ i18n('util.powerManagement') }}</span></div>
       <div class="setting-row">
         <Moon :size="18" class="row-icon" />
-        <div><div class="row-label">{{ i18n('util.hibernate') }}</div><div class="row-desc">{{ i18n('util.hibernateDesc') }}</div></div><n-switch v-model:value="hibernate" @update:value="onHibernate" />
+        <div><div class="row-label">{{ i18n('util.hibernate') }}</div><div class="row-desc">{{ i18n('util.hibernateDesc') }}</div></div><n-switch v-model:value="hibernate" :loading="hibernateBusy" @update:value="onHibernate" />
       </div>
       <div class="setting-row">
         <Zap :size="18" class="row-icon" />
-        <div><div class="row-label">{{ i18n('util.fastStartup') }}</div><div class="row-desc">{{ i18n('util.fastStartupDesc') }}</div></div><n-switch v-model:value="fastStartup" @update:value="onFastStartup" />
+        <div><div class="row-label">{{ i18n('util.fastStartup') }}</div><div class="row-desc">{{ i18n('util.fastStartupDesc') }}</div></div><n-switch v-model:value="fastStartup" :loading="fastStartupBusy" @update:value="onFastStartup" />
       </div>
     </div>
     <div class="setting-card">
       <div class="setting-card-header setting-card-header--flat"><span class="header-title">{{ i18n('util.apps') }}</span></div>
       <div class="setting-row">
         <Image :size="18" class="row-icon" />
-        <div><div class="row-label">{{ i18n('util.photoViewer') }}</div><div class="row-desc">{{ i18n('util.photoViewerDesc') }}</div></div><n-switch v-model:value="photoViewer" @update:value="onPhotoViewer" />
+        <div><div class="row-label">{{ i18n('util.photoViewer') }}</div><div class="row-desc">{{ i18n('util.photoViewerDesc') }}</div></div><n-switch v-model:value="photoViewer" :loading="photoViewerBusy" @update:value="onPhotoViewer" />
       </div>
       <div class="setting-row">
         <Globe :size="18" class="row-icon" />

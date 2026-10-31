@@ -17,32 +17,60 @@ import {
   GetWidgetsStatus, DisableWidgets, EnableWidgets,
 } from '../../wailsjs/go/main/App'
 
+import { useBackendToggle } from '../composables/useBackendToggle'
+import { useNotify } from '../composables/useNotify'
+import { explorerRestartPrompt } from '../composables/useExplorerRestartPrompt'
+
 const { t: i18n } = useI18n()
+const notify = useNotify()
 
 const notif = ref('0')
-const legacyBalloons = ref(false)
-const edgeSwipe = ref(true)
-const newMenu = ref(true)
-const explorerHome = ref(true)
-const explorerGallery = ref(true)
-const removeArrow = ref(false)
-const removeText = ref(false)
-const removeShield = ref(false)
-const win11TaskManager = ref(true)
-const widgets = ref(true)
+
+const { value: legacyBalloons, refresh: refreshLegacyBalloons, onUpdate: onLegacyBalloon, busy: legacyBalloonsBusy } = useBackendToggle(
+  GetLegacyBalloonStatus, SetLegacyBalloon, () => i18n('pers.legacyBalloon'), explorerRestartPrompt.show,
+)
+const { value: edgeSwipe, refresh: refreshEdgeSwipe, onUpdate: onEdgeSwipe, busy: edgeSwipeBusy } = useBackendToggle(
+  GetEdgeSwipeStatus, SetEdgeSwipe, () => i18n('pers.edgeSwipe'), explorerRestartPrompt.show,
+)
+const { value: newMenu, refresh: refreshNewMenu, onUpdate: onNewMenu, busy: newMenuBusy } = useBackendToggle(
+  GetNewContextMenuStatus, SetNewContextMenu, () => i18n('pers.contextMenu'), explorerRestartPrompt.show,
+)
+const { value: explorerHome, refresh: refreshExplorerHome, onUpdate: onExplorerHome, busy: explorerHomeBusy } = useBackendToggle(
+  GetExplorerHomeStatus, SetExplorerHome, () => i18n('pers.explorerHome'), explorerRestartPrompt.show,
+)
+const { value: explorerGallery, refresh: refreshExplorerGallery, onUpdate: onExplorerGallery, busy: explorerGalleryBusy } = useBackendToggle(
+  GetExplorerGalleryStatus, SetExplorerGallery, () => i18n('pers.explorerGallery'), explorerRestartPrompt.show,
+)
+const { value: removeArrow, refresh: refreshRemoveArrow, onUpdate: onRemoveArrow, busy: removeArrowBusy } = useBackendToggle(
+  GetRemoveShortcutArrowStatus, SetRemoveShortcutArrow, () => i18n('pers.removeArrow'), explorerRestartPrompt.show,
+)
+const { value: removeText, refresh: refreshRemoveText, onUpdate: onRemoveText, busy: removeTextBusy } = useBackendToggle(
+  GetRemoveShortcutTextStatus, SetRemoveShortcutText, () => i18n('pers.removeText'), explorerRestartPrompt.show,
+)
+const { value: removeShield, refresh: refreshRemoveShield, onUpdate: onRemoveShield, busy: removeShieldBusy } = useBackendToggle(
+  GetRemoveShieldStatus, SetRemoveShield, () => i18n('pers.removeShield'), explorerRestartPrompt.show,
+)
+const { value: win11TaskManager, refresh: refreshWin11TaskManager, onUpdate: onWin11TaskManager, busy: win11TaskManagerBusy } = useBackendToggle(
+  GetOldTaskManagerStatus, SetOldTaskManager, () => i18n('pers.win11TaskManager'), explorerRestartPrompt.show,
+)
+const { value: widgets, refresh: refreshWidgets, onUpdate: onWidgets, busy: widgetsBusy } = useBackendToggle(
+  GetWidgetsStatus, v => (v ? EnableWidgets() : DisableWidgets()), () => i18n('pers.widgets'),
+)
 
 onMounted(async () => {
   notif.value = await GetNotificationStatus()
-  legacyBalloons.value = await GetLegacyBalloonStatus()
-  edgeSwipe.value = await GetEdgeSwipeStatus()
-  newMenu.value = await GetNewContextMenuStatus()
-  explorerHome.value = await GetExplorerHomeStatus()
-  explorerGallery.value = await GetExplorerGalleryStatus()
-  removeArrow.value = await GetRemoveShortcutArrowStatus()
-  removeText.value = await GetRemoveShortcutTextStatus()
-  removeShield.value = await GetRemoveShieldStatus()
-  win11TaskManager.value = await GetOldTaskManagerStatus()
-  widgets.value = await GetWidgetsStatus()
+  await Promise.all([
+    refreshLegacyBalloons(),
+    refreshEdgeSwipe(),
+    refreshNewMenu(),
+    refreshExplorerHome(),
+    refreshExplorerGallery(),
+    refreshRemoveArrow(),
+    refreshRemoveText(),
+    refreshRemoveShield(),
+    refreshWin11TaskManager(),
+    refreshWidgets(),
+  ])
 })
 
 const notifOptions = computed(() => [
@@ -52,58 +80,21 @@ const notifOptions = computed(() => [
 ])
 
 async function onNotifChange(v: string) {
-  await SetNotificationMode(v)
+  const prev = notif.value
+  const ok = await SetNotificationMode(v)
   notif.value = await GetNotificationStatus()
-}
-
-async function onLegacyBalloon(v: boolean) {
-  await SetLegacyBalloon(v)
-  legacyBalloons.value = await GetLegacyBalloonStatus()
-}
-
-async function onEdgeSwipe(v: boolean) {
-  await SetEdgeSwipe(v)
-  edgeSwipe.value = await GetEdgeSwipeStatus()
-}
-
-async function onNewMenu(v: boolean) {
-  await SetNewContextMenu(v)
-  newMenu.value = await GetNewContextMenuStatus()
-}
-
-async function onExplorerHome(v: boolean) {
-  await SetExplorerHome(v)
-  explorerHome.value = await GetExplorerHomeStatus()
-}
-
-async function onExplorerGallery(v: boolean) {
-  await SetExplorerGallery(v)
-  explorerGallery.value = await GetExplorerGalleryStatus()
-}
-
-async function onRemoveArrow(v: boolean) {
-  await SetRemoveShortcutArrow(v)
-  removeArrow.value = await GetRemoveShortcutArrowStatus()
-}
-
-async function onRemoveText(v: boolean) {
-  await SetRemoveShortcutText(v)
-  removeText.value = await GetRemoveShortcutTextStatus()
-}
-
-async function onRemoveShield(v: boolean) {
-  await SetRemoveShield(v)
-  removeShield.value = await GetRemoveShieldStatus()
-}
-
-async function onWin11TaskManager(v: boolean) {
-  await SetOldTaskManager(v)
-  win11TaskManager.value = await GetOldTaskManagerStatus()
-}
-
-async function onWidgets(v: boolean) {
-  if (v) await EnableWidgets(); else await DisableWidgets()
-  widgets.value = await GetWidgetsStatus()
+  if (!ok) {
+    notify.create({
+      title: i18n('common.updateFailed'),
+      description: `${i18n('pers.notification')}：${i18n('common.updateFailedDesc')}`,
+      type: 'error',
+      duration: 6000,
+    })
+    return
+  }
+  if (notif.value !== prev) {
+    explorerRestartPrompt.show()
+  }
 }
 </script>
 
@@ -118,46 +109,46 @@ async function onWidgets(v: boolean) {
       </div>
       <div class="setting-row">
         <MessageCircle :size="18" class="row-icon" />
-        <div><div class="row-label">{{ i18n('pers.legacyBalloon') }}</div><div class="row-desc">{{ i18n('pers.legacyBalloonDesc') }}</div></div><n-switch v-model:value="legacyBalloons" @update:value="onLegacyBalloon" />
+        <div><div class="row-label">{{ i18n('pers.legacyBalloon') }}</div><div class="row-desc">{{ i18n('pers.legacyBalloonDesc') }}</div></div><n-switch v-model:value="legacyBalloons" :loading="legacyBalloonsBusy" @update:value="onLegacyBalloon" />
       </div>
       <div class="setting-row">
         <Hand :size="18" class="row-icon" />
-        <div><div class="row-label">{{ i18n('pers.edgeSwipe') }}</div><div class="row-desc">{{ i18n('pers.edgeSwipeDesc') }}</div></div><n-switch v-model:value="edgeSwipe" @update:value="onEdgeSwipe" />
+        <div><div class="row-label">{{ i18n('pers.edgeSwipe') }}</div><div class="row-desc">{{ i18n('pers.edgeSwipeDesc') }}</div></div><n-switch v-model:value="edgeSwipe" :loading="edgeSwipeBusy" @update:value="onEdgeSwipe" />
       </div>
       <div class="setting-row">
         <List :size="18" class="row-icon" />
-        <div><div class="row-label">{{ i18n('pers.contextMenu') }}</div><div class="row-desc">{{ i18n('pers.contextMenuDesc') }}</div></div><n-switch v-model:value="newMenu" @update:value="onNewMenu" />
+        <div><div class="row-label">{{ i18n('pers.contextMenu') }}</div><div class="row-desc">{{ i18n('pers.contextMenuDesc') }}</div></div><n-switch v-model:value="newMenu" :loading="newMenuBusy" @update:value="onNewMenu" />
       </div>
       <div class="setting-row">
         <Activity :size="18" class="row-icon" />
-        <div><div class="row-label">{{ i18n('pers.win11TaskManager') }}</div><div class="row-desc">{{ i18n('pers.win11TaskManagerDesc') }}</div></div><n-switch v-model:value="win11TaskManager" @update:value="onWin11TaskManager" />
+        <div><div class="row-label">{{ i18n('pers.win11TaskManager') }}</div><div class="row-desc">{{ i18n('pers.win11TaskManagerDesc') }}</div></div><n-switch v-model:value="win11TaskManager" :loading="win11TaskManagerBusy" @update:value="onWin11TaskManager" />
       </div>
       <div class="setting-row">
         <LayoutGrid :size="18" class="row-icon" />
-        <div><div class="row-label">{{ i18n('pers.widgets') }}</div><div class="row-desc">{{ i18n('pers.widgetsDesc') }}</div></div><n-switch v-model:value="widgets" @update:value="onWidgets" />
+        <div><div class="row-label">{{ i18n('pers.widgets') }}</div><div class="row-desc">{{ i18n('pers.widgetsDesc') }}</div></div><n-switch v-model:value="widgets" :loading="widgetsBusy" @update:value="onWidgets" />
       </div>
       <div class="setting-row">
         <Home :size="18" class="row-icon" />
-        <div><div class="row-label">{{ i18n('pers.explorerHome') }}</div><div class="row-desc">{{ i18n('pers.explorerHomeDesc') }}</div></div><n-switch v-model:value="explorerHome" @update:value="onExplorerHome" />
+        <div><div class="row-label">{{ i18n('pers.explorerHome') }}</div><div class="row-desc">{{ i18n('pers.explorerHomeDesc') }}</div></div><n-switch v-model:value="explorerHome" :loading="explorerHomeBusy" @update:value="onExplorerHome" />
       </div>
       <div class="setting-row">
         <Image :size="18" class="row-icon" />
-        <div><div class="row-label">{{ i18n('pers.explorerGallery') }}</div><div class="row-desc">{{ i18n('pers.explorerGalleryDesc') }}</div></div><n-switch v-model:value="explorerGallery" @update:value="onExplorerGallery" />
+        <div><div class="row-label">{{ i18n('pers.explorerGallery') }}</div><div class="row-desc">{{ i18n('pers.explorerGalleryDesc') }}</div></div><n-switch v-model:value="explorerGallery" :loading="explorerGalleryBusy" @update:value="onExplorerGallery" />
       </div>
     </div>
     <div class="setting-card">
       <div class="setting-card-header setting-card-header--flat"><span class="header-title">{{ i18n('pers.appearance') }}</span></div>
       <div class="setting-row">
         <ArrowUpRight :size="18" class="row-icon" />
-        <div><div class="row-label">{{ i18n('pers.removeArrow') }}</div><div class="row-desc">{{ i18n('pers.removeArrowDesc') }}</div></div><n-switch v-model:value="removeArrow" @update:value="onRemoveArrow" />
+        <div><div class="row-label">{{ i18n('pers.removeArrow') }}</div><div class="row-desc">{{ i18n('pers.removeArrowDesc') }}</div></div><n-switch v-model:value="removeArrow" :loading="removeArrowBusy" @update:value="onRemoveArrow" />
       </div>
       <div class="setting-row">
         <Type :size="18" class="row-icon" />
-        <div><div class="row-label">{{ i18n('pers.removeText') }}</div><div class="row-desc">{{ i18n('pers.removeTextDesc') }}</div></div><n-switch v-model:value="removeText" @update:value="onRemoveText" />
+        <div><div class="row-label">{{ i18n('pers.removeText') }}</div><div class="row-desc">{{ i18n('pers.removeTextDesc') }}</div></div><n-switch v-model:value="removeText" :loading="removeTextBusy" @update:value="onRemoveText" />
       </div>
       <div class="setting-row">
         <ShieldOff :size="18" class="row-icon" />
-        <div><div class="row-label">{{ i18n('pers.removeShield') }}</div><div class="row-desc">{{ i18n('pers.removeShieldDesc') }}</div></div><n-switch v-model:value="removeShield" @update:value="onRemoveShield" />
+        <div><div class="row-label">{{ i18n('pers.removeShield') }}</div><div class="row-desc">{{ i18n('pers.removeShieldDesc') }}</div></div><n-switch v-model:value="removeShield" :loading="removeShieldBusy" @update:value="onRemoveShield" />
       </div>
     </div>
   </div>

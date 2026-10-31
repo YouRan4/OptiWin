@@ -35,6 +35,10 @@ jobs:
         working-directory: frontend
         run: npm install && npm run build
 
+      - name: Typecheck frontend
+        working-directory: frontend
+        run: npx vue-tsc --noEmit -p tsconfig.app.json
+
       - name: Build Windows exe
         run: |
           wails build -tags webkit2_41 -o OptiWin-${{ github.ref_name }}.exe -ldflags="-s -w" -trimpath

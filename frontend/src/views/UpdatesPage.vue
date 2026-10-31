@@ -20,15 +20,23 @@ import {
 } from '../../wailsjs/go/main/App'
 
 import { useNotify } from '../composables/useNotify'
+import { useBackendToggle } from '../composables/useBackendToggle'
 
 const { t: i18n } = useI18n()
 const notify = useNotify()
-const pauseUpdates = ref(false)
-const visibility = ref(false)
-const drivers = ref(true)
 const channel = ref('retail')
 const showChannelConfirm = ref(false)
 const pendingChannel = ref('')
+
+const { value: pauseUpdates, refresh: refreshPauseUpdates, onUpdate: onPauseChange, busy: pauseUpdatesBusy } = useBackendToggle(
+  GetPauseUpdatesStatus, v => (v ? EnablePauseUpdates() : DisablePauseUpdates()), () => i18n('upd.pause'),
+)
+const { value: visibility, refresh: refreshVisibility, onUpdate: onVisibilityChange, busy: visibilityBusy } = useBackendToggle(
+  GetVisibilityStatus, v => (v ? EnableVisibility() : DisableVisibility()), () => i18n('upd.hidePage'),
+)
+const { value: drivers, refresh: refreshDrivers, onUpdate: onDriversChange, busy: driversBusy } = useBackendToggle(
+  GetDriverUpdatesStatus, v => (v ? EnableDriverUpdates() : DisableDriverUpdates()), () => i18n('upd.drivers'),
+)
 
 const channelOptions = computed(() => [
   { label: i18n('upd.exitInsider'), value: 'retail' },
@@ -39,9 +47,7 @@ const channelOptions = computed(() => [
 ])
 
 onMounted(async () => {
-  pauseUpdates.value = await GetPauseUpdatesStatus()
-  visibility.value = await GetVisibilityStatus()
-  drivers.value = await GetDriverUpdatesStatus()
+  await Promise.all([refreshPauseUpdates(), refreshVisibility(), refreshDrivers()])
   channel.value = await GetUpdateChannel()
 })
 
@@ -55,21 +61,6 @@ async function doKGL() {
   notify.create({ title: i18n('upd.kglTitle'), description: msg, duration: 5000 })
 }
 
-async function onPauseChange(v: boolean) {
-  if (v) await EnablePauseUpdates() ; else await DisablePauseUpdates()
-  pauseUpdates.value = await GetPauseUpdatesStatus()
-}
-
-async function onVisibilityChange(v: boolean) {
-  if (v) await EnableVisibility(); else await DisableVisibility()
-  visibility.value = await GetVisibilityStatus()
-}
-
-async function onDriversChange(v: boolean) {
-  if (v) await EnableDriverUpdates() ; else await DisableDriverUpdates()
-  drivers.value = await GetDriverUpdatesStatus()
-}
-
 async function onChannelChange(v: string) {
   pendingChannel.value = v
   showChannelConfirm.value = true
@@ -77,8 +68,16 @@ async function onChannelChange(v: string) {
 
 async function confirmChannel() {
   showChannelConfirm.value = false
-  await SetUpdateChannel(pendingChannel.value)
+  const ok = await SetUpdateChannel(pendingChannel.value)
   channel.value = await GetUpdateChannel()
+  if (!ok) {
+    notify.create({
+      title: i18n('common.updateFailed'),
+      description: `${i18n('upd.channel')}：${i18n('common.updateFailedDesc')}`,
+      type: 'error',
+      duration: 6000,
+    })
+  }
 }
 
 async function cancelChannel() {
@@ -106,15 +105,15 @@ async function cancelChannel() {
       <div class="setting-card-header setting-card-header--flat"><span class="header-title">{{ i18n('upd.windowsUpdate') }}</span></div>
       <div class="setting-row">
         <PauseCircle :size="18" class="row-icon" />
-        <div><div class="row-label">{{ i18n('upd.pause') }}</div><div class="row-desc">{{ i18n('upd.pauseDesc') }}</div></div><n-switch v-model:value="pauseUpdates" @update:value="onPauseChange" />
+        <div><div class="row-label">{{ i18n('upd.pause') }}</div><div class="row-desc">{{ i18n('upd.pauseDesc') }}</div></div><n-switch v-model:value="pauseUpdates" :loading="pauseUpdatesBusy" @update:value="onPauseChange" />
       </div>
       <div class="setting-row">
         <EyeOff :size="18" class="row-icon" />
-        <div><div class="row-label">{{ i18n('upd.hidePage') }}</div><div class="row-desc">{{ i18n('upd.hidePageDesc') }}</div></div><n-switch v-model:value="visibility" @update:value="onVisibilityChange" />
+        <div><div class="row-label">{{ i18n('upd.hidePage') }}</div><div class="row-desc">{{ i18n('upd.hidePageDesc') }}</div></div><n-switch v-model:value="visibility" :loading="visibilityBusy" @update:value="onVisibilityChange" />
       </div>
       <div class="setting-row">
         <Truck :size="18" class="row-icon" />
-        <div><div class="row-label">{{ i18n('upd.drivers') }}</div><div class="row-desc">{{ i18n('upd.driversDesc') }}</div></div><n-switch v-model:value="drivers" @update:value="onDriversChange" />
+        <div><div class="row-label">{{ i18n('upd.drivers') }}</div><div class="row-desc">{{ i18n('upd.driversDesc') }}</div></div><n-switch v-model:value="drivers" :loading="driversBusy" @update:value="onDriversChange" />
       </div>
       <div v-if="!pauseUpdates" class="setting-row">
         <Radio :size="18" class="row-icon" />

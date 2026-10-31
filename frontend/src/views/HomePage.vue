@@ -3,7 +3,7 @@ import { ref, onMounted, h, computed } from 'vue'
 import { useI18n } from 'vue-i18n'
 import { NButton, NSelect, useDialog } from 'naive-ui'
 import { BrowserOpenURL } from '../../wailsjs/runtime/runtime'
-import { GetCurrentVersion, CheckUpdate, GetSystemInfo, GetProxyInfo } from '../../wailsjs/go/main/App'
+import { GetCurrentVersion, CheckUpdate, GetSystemInfo, GetProxyInfo, OpenLogDir, LogDir } from '../../wailsjs/go/main/App'
 import { marked } from 'marked'
 import { useNotify } from '../composables/useNotify'
 
@@ -28,21 +28,29 @@ function switchLang(lang: string) {
 }
 
 onMounted(async () => {
-  version.value = await GetCurrentVersion()
-  proxyInfo.value = await GetProxyInfo()
-  const raw = await GetSystemInfo()
+  const [v, proxy, raw] = await Promise.all([GetCurrentVersion(), GetProxyInfo(), GetSystemInfo()])
+  version.value = v
+  proxyInfo.value = proxy
   try { info.value = JSON.parse(raw) } catch {}
 
   if (checkedAuto) return
   checkedAuto = true
   const skipped = localStorage.getItem('optiwin_skip_version')
   const result = await CheckUpdate()
-  if (result && !result.startsWith('err:') && result !== 'same') {
-    const r = JSON.parse(result)
-    if (r.version === skipped) return
-    showUpdateDialog(r)
+  if (!result || result.startsWith('err:')) {
+    notifyCheckFailed(result)
+    return
   }
+  if (result === 'same') return
+  const r = JSON.parse(result)
+  if (r.version === skipped) return
+  showUpdateDialog(r)
 })
+
+function notifyCheckFailed(result: string) {
+  const msg = result && result.startsWith('err:') ? result.slice(4) : i18n('home.cannotConnect')
+  notify.create({ title: i18n('home.checkUpdate'), description: msg, duration: 5000, type: 'warning' })
+}
 
 function showUpdateDialog(r: { version: string; body: string; url: string }) {
   const htmlBody = marked.parse(r.body || i18n('home.noUpdateNotes'))
@@ -70,13 +78,24 @@ function copyText(text: string, label: string) {
   })
 }
 
+async function onOpenLogDir() {
+  const ok = await OpenLogDir()
+  if (ok) return
+  const dir = await LogDir()
+  notify.create({
+    title: i18n('info.openLogDir'),
+    description: `${i18n('info.logOpenFailed')} ${dir}`,
+    type: 'error',
+    duration: 8000,
+  })
+}
+
 async function onCheckUpdate() {
   checking.value = true
   const result = await CheckUpdate()
   checking.value = false
   if (!result || result.startsWith('err:')) {
-    const msg = result && result.startsWith('err:') ? result.slice(4) : i18n('home.cannotConnect')
-    notify.create({ title: i18n('home.checkUpdate'), description: msg, duration: 5000 })
+    notifyCheckFailed(result)
     return
   }
   if (result === 'same') {
@@ -125,6 +144,12 @@ async function onCheckUpdate() {
           <div class="credits-list">
             <span class="info-link" @click="BrowserOpenURL('https://github.com/meetrevision/revision-tool')">meetrevision/revision-tool</span>
             <span class="info-link" @click="BrowserOpenURL('https://lucide.dev/')">Lucide</span>
+          </div>
+        </div>
+        <div class="info-card">
+          <div class="log-row">
+            <span class="info-header" style="margin:0">{{ i18n('info.logs') }}</span>
+            <n-button size="small" @click="onOpenLogDir">{{ i18n('info.openLogDir') }}</n-button>
           </div>
         </div>
       </div>
@@ -190,7 +215,7 @@ h1 { font-size: 26px; font-weight: 700; margin-bottom: 4px; }
 .lang-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
 .credits-list { display: flex; flex-direction: column; gap: 6px; }
-
+.log-row { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
 
 .system-info-header {
   padding: 10px 5px 12px;

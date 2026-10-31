@@ -13,6 +13,7 @@ import {
 } from '../../wailsjs/go/main/App'
 import WaitModal from '../components/WaitModal.vue'
 import { useNotify } from '../composables/useNotify'
+import { useBackendToggle } from '../composables/useBackendToggle'
 
 const { t: i18n } = useI18n()
 const notify = useNotify()
@@ -21,9 +22,17 @@ const showModal = ref(false)
 const modalText = ref('')
 const showDefenderWarn = ref(false)
 
-const uac = ref(false)
-const vbs = ref(false)
-const memIntegrity = ref(false)
+const { value: uac, refresh: refreshUac, onUpdate: onUac, busy: uacBusy } = useBackendToggle(
+  GetUacStatus, v => (v ? EnableUac() : DisableUac()), () => i18n('sec.uac'),
+)
+const { value: vbs, refresh: refreshVbs, onUpdate: onVbs, busy: vbsBusy } = useBackendToggle(
+  GetVbsStatus, v => (v ? EnableVbs() : DisableVbs()), () => i18n('sec.vbs'),
+)
+const { value: memIntegrity, refresh: refreshMemIntegrity, onUpdate: onMemIntegrity, busy: memIntegrityBusy } = useBackendToggle(
+  GetMemoryIntegrityStatus,
+  v => (v ? EnableMemoryIntegrity() : DisableMemoryIntegrity()),
+  () => i18n('sec.memIntegrity'),
+)
 const coreServicesDisabled = ref(false)
 
 // IFEO
@@ -47,11 +56,10 @@ const runningProcesses = ref<string[]>([])
 const blockedProcesses = [
   'csrss.exe', 'smss.exe', 'lsass.exe', 'services.exe',
   'wininit.exe', 'winlogon.exe', 'svchost.exe', 'dwm.exe',
-  'conhost.exe', 'fontdrvhost.exe', 'RuntimeBroker.exe',
-  'sihost.exe', 'shellexperiencehost.exe', 'StartMenuExperienceHost.exe',
-  'SearchUI.exe', 'SearchIndexer.exe', 'MsMpEng.exe', 'taskhostw.exe',
+  'conhost.exe', 'fontdrvhost.exe', 'runtimebroker.exe',
+  'sihost.exe', 'shellexperiencehost.exe', 'startmenuexperiencehost.exe',
+  'searchui.exe', 'searchindexer.exe', 'msmpeng.exe', 'taskhostw.exe',
   'ntoskrnl.exe', 'hal.dll', 'bootvid.dll', 'win32k.sys',
-  'csrss.exe', 'smss.exe', 'lsass.exe', 'svchost.exe',
 ]
 
 const telemetryProcesses = [
@@ -60,8 +68,14 @@ const telemetryProcesses = [
   'FeatureLoader.exe'
 ]
 
-const telemetryBlocked = ref(false)
 const telemetryDebuggerPath = '%windir%\\system32\\taskkill.exe'
+
+// 开关状态由实际 IFEO 条目推导，而不是在加载时算一次存进 ref；
+// 7 个进程全部被劫持才算已禁用，部分成功如实显示为未启用
+const telemetryBlocked = computed(() => {
+  const entries = ifeoEntries.value ?? []
+  return telemetryProcesses.every(p => entries.some(e => e.name.toLowerCase() === p.toLowerCase()))
+})
 
 // DNS
 const dnsOptions = computed(() => [
@@ -99,55 +113,33 @@ async function onDnsChange(value: string) {
       const label = dnsOptions.value.find(o => o.value === value)?.label
       notify.create({
         title: i18n('sec.notifyTitle'),
-        description: `已切换到 ${label}`,
+        description: i18n('sec.dnsSwitched', { name: label }),
         duration: 3000
       })
     } else {
-      notify.create({ title: i18n('sec.notifyTitle'), description: 'DNS 切换失败', duration: 4000 })
+      notify.create({ title: i18n('sec.notifyTitle'), description: i18n('sec.dnsSwitchFailed'), duration: 4000 })
     }
   } catch (e: any) {
     notify.create({ title: i18n('sec.notifyTitle'), description: e?.message || 'Error', duration: 4000 })
   }
 }
 
-function checkTelemetryStatus() {
-  telemetryBlocked.value = telemetryProcesses.some(p =>
-    ifeoEntries.value.some(e => e.name.toLowerCase() === p.toLowerCase())
-  )
-}
-
 const filteredIfeo = computed(() => {
-  if (!ifeoSearch.value) return ifeoEntries.value
+  const entries = ifeoEntries.value ?? []
+  if (!ifeoSearch.value) return entries
   const q = ifeoSearch.value.toLowerCase()
-  return ifeoEntries.value.filter(e =>
+  return entries.filter(e =>
     e.name.toLowerCase().includes(q) ||
     e.debugger.toLowerCase().includes(q)
   )
 })
 
 onMounted(async () => {
-  uac.value = await GetUacStatus()
-  vbs.value = await GetVbsStatus()
-  memIntegrity.value = await GetMemoryIntegrityStatus()
+  await Promise.all([refreshUac(), refreshVbs(), refreshMemIntegrity()])
   coreServicesDisabled.value = await GetCoreServicesDisabled()
   await loadIfeoEntries()
   await loadCurrentDns()
 })
-
-async function onUac(v: boolean) {
-  if (v) await EnableUac(); else await DisableUac()
-  uac.value = await GetUacStatus()
-}
-
-async function onVbs(v: boolean) {
-  if (v) await EnableVbs(); else await DisableVbs()
-  vbs.value = await GetVbsStatus()
-}
-
-async function onMemIntegrity(v: boolean) {
-  if (v) await EnableMemoryIntegrity(); else await DisableMemoryIntegrity()
-  memIntegrity.value = await GetMemoryIntegrityStatus()
-}
 
 async function onDisableDefender() {
   // 检测实时保护与篡改保护是否都已关闭
@@ -187,8 +179,8 @@ async function loadIfeoEntries() {
   ifeoLoading.value = true
   try {
     const result = await ListIfeoEntries()
-    ifeoEntries.value = JSON.parse(result)
-    checkTelemetryStatus()
+    const parsed = JSON.parse(result)
+    ifeoEntries.value = Array.isArray(parsed) ? parsed : []
   } catch {
     ifeoEntries.value = []
   } finally {
@@ -229,7 +221,7 @@ async function addIfeoEntry() {
   }
 
   const exeNameLower = exeName.toLowerCase()
-  if (blockedProcesses.some(p => exeNameLower.includes(p))) {
+  if (blockedProcesses.includes(exeNameLower)) {
     notify.create({ title: i18n('sec.notifyTitle'), description: i18n('sec.ifeoBlockedProcess'), duration: 6000 })
     return
   }
@@ -281,14 +273,20 @@ async function onTelemetryToggle(v: boolean) {
   modalText.value = i18n('sec.operating')
   showModal.value = true
   try {
-    for (const proc of telemetryProcesses) {
-      if (v) {
-        await AddIfeoEntry(proc, telemetryDebuggerPath)
-      } else {
-        await RemoveIfeoEntry(proc)
-      }
-    }
+    const results = await Promise.all(telemetryProcesses.map(proc =>
+      v ? AddIfeoEntry(proc, telemetryDebuggerPath) : RemoveIfeoEntry(proc)
+    ))
+    const failed = results.filter(r => !r).length
     await loadIfeoEntries()
+    if (failed > 0) {
+      notify.create({
+        title: i18n('common.updateFailed'),
+        description: `${i18n('sec.telemetryTitle')}：${failed}/${telemetryProcesses.length}`,
+        type: 'error',
+        duration: 6000,
+      })
+      return
+    }
     notify.create({
       title: i18n('sec.notifyTitle'),
       description: v ? i18n('sec.telemetryEnabled') : i18n('sec.telemetryDisabled'),
@@ -332,7 +330,7 @@ async function onTelemetryToggle(v: boolean) {
         <n-button size="small" strong @click="OpenWindowsSecurity()">{{ i18n('sec.defenderTpBtn') }}</n-button>
       </div>
       <div style="padding:8px 12px 12px; font-size:12px; color:var(--text2); line-height:1.8">
-        <div>说明：</div>
+        <div>{{ i18n('sec.defenderNote') }}</div>
         <div>1. {{ i18n('sec.defenderStep1') }}</div>
         <div>2. {{ i18n('sec.defenderStep2') }}</div>
         <div>3. {{ i18n('sec.defenderStep3') }}</div>
@@ -349,7 +347,7 @@ async function onTelemetryToggle(v: boolean) {
           <div class="row-label">{{ i18n('sec.uac') }}</div>
           <div class="row-desc">{{ i18n('sec.uacDesc') }}</div>
         </div>
-        <n-switch v-model:value="uac" @update:value="onUac" />
+        <n-switch v-model:value="uac" :loading="uacBusy" @update:value="onUac" />
       </div>
       <div class="setting-row">
         <Server :size="18" class="row-icon" />
@@ -357,7 +355,7 @@ async function onTelemetryToggle(v: boolean) {
           <div class="row-label">{{ i18n('sec.vbs') }}</div>
           <div class="row-desc">{{ i18n('sec.vbsDesc') }}</div>
         </div>
-        <n-switch v-model:value="vbs" @update:value="onVbs" />
+        <n-switch v-model:value="vbs" :loading="vbsBusy" @update:value="onVbs" />
       </div>
       <div class="setting-row">
         <HardDrive :size="18" class="row-icon" />
@@ -365,7 +363,7 @@ async function onTelemetryToggle(v: boolean) {
           <div class="row-label">{{ i18n('sec.memIntegrity') }}</div>
           <div class="row-desc">{{ i18n('sec.memIntegrityDesc') }}</div>
         </div>
-        <n-switch v-model:value="memIntegrity" @update:value="onMemIntegrity" />
+        <n-switch v-model:value="memIntegrity" :loading="memIntegrityBusy" @update:value="onMemIntegrity" />
       </div>
     </div>
 
@@ -406,16 +404,16 @@ async function onTelemetryToggle(v: boolean) {
       <div class="setting-row">
         <div style="flex:2">
           <div class="row-label" style="display:flex; justify-content:space-between">
-            <span>网卡</span>
-            <span>{{ currentDnsInfo.adapter || '未检测到' }}</span>
+            <span>{{ i18n('sec.dnsAdapter') }}</span>
+            <span>{{ currentDnsInfo.adapter || i18n('sec.dnsNotDetected') }}</span>
           </div>
           <div class="row-label" style="display:flex; justify-content:space-between">
-            <span>主 DNS</span>
-            <span>{{ currentDnsInfo.primaryDns || '未设置' }}</span>
+            <span>{{ i18n('sec.dnsPrimary') }}</span>
+            <span>{{ currentDnsInfo.primaryDns || i18n('sec.dnsNotSet') }}</span>
           </div>
           <div class="row-label" style="display:flex; justify-content:space-between">
-            <span>副 DNS</span>
-            <span>{{ currentDnsInfo.secondaryDns || '未设置' }}</span>
+            <span>{{ i18n('sec.dnsSecondary') }}</span>
+            <span>{{ currentDnsInfo.secondaryDns || i18n('sec.dnsNotSet') }}</span>
           </div>
         </div>
       </div>

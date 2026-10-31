@@ -4,12 +4,14 @@ package services
 
 import (
 	"OptiWin/utils"
+	"errors"
 	"fmt"
 	"io"
 	"os"
 	"os/exec"
 	"path/filepath"
 	"strings"
+	"time"
 	"unsafe"
 
 	"golang.org/x/sys/windows/registry"
@@ -28,8 +30,8 @@ func EnableHibernate() bool {
 	if ret != 0 {
 		return false
 	}
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SYSTEM\CurrentControlSet\Control\Power`, "HibernateEnabled", 1)
-	return true
+	return reportErr("EnableHibernate", utils.RegSetDWordE(registry.LOCAL_MACHINE,
+		`SYSTEM\CurrentControlSet\Control\Power`, "HibernateEnabled", 1))
 }
 
 func DisableHibernate() bool {
@@ -39,8 +41,8 @@ func DisableHibernate() bool {
 	if ret != 0 {
 		return false
 	}
-	utils.RegSetDWord(registry.LOCAL_MACHINE, `SYSTEM\CurrentControlSet\Control\Power`, "HibernateEnabled", 0)
-	return true
+	return reportErr("DisableHibernate", utils.RegSetDWordE(registry.LOCAL_MACHINE,
+		`SYSTEM\CurrentControlSet\Control\Power`, "HibernateEnabled", 0))
 }
 
 func GetFastStartupStatus() bool {
@@ -50,15 +52,13 @@ func GetFastStartupStatus() bool {
 }
 
 func EnableFastStartup() bool {
-	utils.RegSetDWord(registry.LOCAL_MACHINE,
-		`SYSTEM\CurrentControlSet\Control\Session Manager\Power`, "HiberbootEnabled", 1)
-	return true
+	return reportErr("EnableFastStartup", utils.RegSetDWordE(registry.LOCAL_MACHINE,
+		`SYSTEM\CurrentControlSet\Control\Session Manager\Power`, "HiberbootEnabled", 1))
 }
 
 func DisableFastStartup() bool {
-	utils.RegSetDWord(registry.LOCAL_MACHINE,
-		`SYSTEM\CurrentControlSet\Control\Session Manager\Power`, "HiberbootEnabled", 0)
-	return true
+	return reportErr("DisableFastStartup", utils.RegSetDWordE(registry.LOCAL_MACHINE,
+		`SYSTEM\CurrentControlSet\Control\Session Manager\Power`, "HiberbootEnabled", 0))
 }
 
 func GetPhotoViewerStatus() bool {
@@ -80,31 +80,72 @@ func GetPhotoViewerStatus() bool {
 }
 
 func EnablePhotoViewer() bool {
+	var errs []error
 	for _, ext := range imgExts {
-		k, _, _ := registry.CreateKey(registry.CURRENT_USER,
+		k, _, err := registry.CreateKey(registry.CURRENT_USER,
 			`Software\Classes\`+ext+`\OpenWithProgids`, registry.SET_VALUE)
-		k.SetStringValue("PhotoViewer.FileAssoc.Tiff", "")
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		errs = append(errs, k.SetStringValue("PhotoViewer.FileAssoc.Tiff", ""))
 		k.Close()
 	}
-	return true
+	return reportErr("EnablePhotoViewer", errors.Join(errs...))
 }
 
 func DisablePhotoViewer() bool {
+	var errs []error
 	for _, ext := range imgExts {
 		k, err := registry.OpenKey(registry.CURRENT_USER,
 			`Software\Classes\`+ext+`\OpenWithProgids`, registry.SET_VALUE)
-		if err != nil {
+		if errors.Is(err, registry.ErrNotExist) {
 			continue
 		}
-		k.DeleteValue("PhotoViewer.FileAssoc.Tiff")
+		if err != nil {
+			errs = append(errs, err)
+			continue
+		}
+		err = k.DeleteValue("PhotoViewer.FileAssoc.Tiff")
+		if err != nil && !errors.Is(err, registry.ErrNotExist) {
+			errs = append(errs, err)
+		}
 		k.Close()
 	}
-	return true
+	return reportErr("DisablePhotoViewer", errors.Join(errs...))
+}
+
+// closeEdge 结束 Edge 的全部后台进程（只针对 msedge.exe，绝不动 msedgewebview2.exe）：
+// 先请求窗口正常关闭（用户可能正在填表），还没退干净的再直接结束，
+// 最后轮询到进程真的消失为止，避免残留占用导致后面的删除失败
+func closeEdge() bool {
+	utils.ExecuteString(`
+$procs = Get-Process -Name msedge -ErrorAction SilentlyContinue
+$procs | Where-Object { $_.MainWindowHandle -ne 0 } | ForEach-Object { $_.CloseMainWindow() | Out-Null }
+`)
+	const wait = 5 * time.Second
+	if n, err := utils.TerminateProcesses("msedge.exe"); err != nil {
+		utils.Logf("[services] 强制结束 msedge.exe 失败（已结束 %d 个）: %v", n, err)
+	}
+	deadline := time.Now().Add(wait)
+	for {
+		left, err := utils.CountProcesses("msedge.exe")
+		if err == nil && left == 0 {
+			return true
+		}
+		if time.Now().After(deadline) {
+			utils.Logf("[services] msedge.exe 在 %s 内未退干净: %v, 剩余 %d 个", wait, err, left)
+			return false
+		}
+		time.Sleep(200 * time.Millisecond)
+	}
 }
 
 func UninstallEdge() string {
-	// 结束 Edge 进程，避免文件占用导致删除失败
-	exec.Command("taskkill", "/f", "/im", "msedge.exe").Run()
+	// 先确保 Edge 后台进程全部退出，否则安装器与文件删除都会被占用挡住
+	if !closeEdge() {
+		return "Edge 后台进程未能关闭，请稍后重试"
+	}
 
 	// 优先调用官方卸载器（24H2 起命令行调用可能被拒绝，失败不影响后续清理）
 	matches, _ := filepath.Glob(`C:\Program Files (x86)\Microsoft\Edge\Application\*\Installer\setup.exe`)
@@ -215,26 +256,49 @@ func InstallEdge() string {
 	return "Edge 已恢复安装，策略已清除"
 }
 
-func SetSafeBoot(mode string) bool {
-	utils.RunHide("bcdedit", "/deletevalue", "{current}", "safeboot")
-	if mode == "minimal" {
-		utils.RunHide("bcdedit", "/set", "{current}", "safeboot", "minimal")
-	} else if mode == "network" {
-		utils.RunHide("bcdedit", "/set", "{current}", "safeboot", "network")
+// safebootMode 读取当前启动项的安全模式设置：minimal / network / normal
+func safebootMode() string {
+	cmd := exec.Command("bcdedit", "/enum", "{current}")
+	utils.HideWindow(cmd)
+	out, err := cmd.CombinedOutput()
+	if err != nil {
+		return "unknown"
 	}
-	return true
+	s := strings.ToLower(string(out))
+	switch {
+	case strings.Contains(s, "safeboot") && strings.Contains(s, "network"):
+		return "network"
+	case strings.Contains(s, "safeboot"):
+		return "minimal"
+	default:
+		return "normal"
+	}
+}
+
+// SetSafeBoot 设置下次启动进入安全模式；写完后回读 bcdedit 确认，避免“以为设了实际没设”
+func SetSafeBoot(mode string) bool {
+	// 先清掉旧值；不存在时 bcdedit 会返回非 0，这是正常情况，以回读结果为准
+	utils.RunHide("bcdedit", "/deletevalue", "{current}", "safeboot")
+	switch mode {
+	case "minimal", "network":
+		utils.RunHide("bcdedit", "/set", "{current}", "safeboot", mode)
+	case "normal":
+	default:
+		return false
+	}
+	if got := safebootMode(); got == mode {
+		return true
+	}
+	utils.Logf("[services] SetSafeBoot 失败：期望 %s，实际 %s", mode, safebootMode())
+	return false
 }
 
 func RebootSystem() bool {
-	cmd := exec.Command("shutdown", "/r", "/t", "0")
-	utils.HideWindow(cmd)
-	return cmd.Run() == nil
+	return utils.RunHide("shutdown", "/r", "/t", "0")
 }
 
 func RebootToBios() bool {
-	cmd := exec.Command("shutdown", "/r", "/fw", "/t", "0")
-	utils.HideWindow(cmd)
-	return cmd.Run() == nil
+	return utils.RunHide("shutdown", "/r", "/fw", "/t", "0")
 }
 
 // UpdateKGL 写入 KGL 数据到注册表
@@ -244,21 +308,41 @@ func UpdateKGL() string {
 		return errMsg
 	}
 
-	kglKey, _, _ := registry.CreateKey(registry.LOCAL_MACHINE,
+	kglKey, _, err := registry.CreateKey(registry.LOCAL_MACHINE,
 		`SOFTWARE\Microsoft\KGL\OneSettings`, registry.SET_VALUE)
+	if err != nil {
+		utils.Logf("[services] UpdateKGL 打开 KGL 键失败: %v", err)
+		return fmt.Sprintf("KGL 写入失败: %v", err)
+	}
 	defer kglKey.Close()
 
-	kglKey.SetStringValue("ActivateOnUpdate", fmt.Sprintf("%v", data.ActivateOnUpdate))
-	kglKey.SetStringValue("Hash", data.Hash)
-	kglKey.SetStringValue("URI", data.URI)
-	kglKey.SetStringValue("Version", data.Version)
-	kglKey.SetDWordValue("VersionCheckTimeout", uint32(data.VersionCheckTimeout))
+	err = errors.Join(
+		kglKey.SetStringValue("ActivateOnUpdate", fmt.Sprintf("%v", data.ActivateOnUpdate)),
+		kglKey.SetStringValue("Hash", data.Hash),
+		kglKey.SetStringValue("URI", data.URI),
+		kglKey.SetStringValue("Version", data.Version),
+		kglKey.SetDWordValue("VersionCheckTimeout", uint32(data.VersionCheckTimeout)),
+	)
+	if err != nil {
+		utils.Logf("[services] UpdateKGL 写入 OneSettings 失败: %v", err)
+		return fmt.Sprintf("KGL 写入失败: %v", err)
+	}
 
-	userKey, _, _ := registry.CreateKey(registry.CURRENT_USER,
+	userKey, _, err := registry.CreateKey(registry.CURRENT_USER,
 		`Software\Microsoft\Windows\CurrentVersion\GameDVR`, registry.SET_VALUE)
+	if err != nil {
+		utils.Logf("[services] UpdateKGL 打开 GameDVR 键失败: %v", err)
+		return fmt.Sprintf("KGL 写入失败: %v", err)
+	}
 	defer userKey.Close()
 
-	userKey.SetStringValue("KGLRevision", data.Version)
-	userKey.SetStringValue("KGLToGCSUpdatedRevision", data.Version)
+	err = errors.Join(
+		userKey.SetStringValue("KGLRevision", data.Version),
+		userKey.SetStringValue("KGLToGCSUpdatedRevision", data.Version),
+	)
+	if err != nil {
+		utils.Logf("[services] UpdateKGL 写入 GameDVR 失败: %v", err)
+		return fmt.Sprintf("KGL 写入失败: %v", err)
+	}
 	return "KGL 更新成功"
 }
