@@ -25,11 +25,17 @@ const { t: i18n, locale } = useI18n()
 const isDark = ref(true)
 
 const explorerRestartPending = explorerRestartPrompt.pending
+// 模板里 `explorerRestartError` 会被自动解包成字符串用于显示；
+// 而把 Ref 本身当作 i18n 的参数传进去，Vue 会 JSON.stringify 出一串 _rawValue 快照
+const explorerRestartError = explorerRestartPrompt.error
 const restartBusy = ref(false)
+// 真正重启资源管理器的中间态：提示条文案用，restartBusy 在提示条出现时已经是 false
+const restarting = ref(false)
 
 async function restartExplorer() {
   if (restartBusy.value) return false
   restartBusy.value = true
+  restarting.value = true
   try {
     const msg = await RestartExplorer()
     if (msg) {
@@ -42,6 +48,7 @@ async function restartExplorer() {
     return false
   } finally {
     restartBusy.value = false
+    restarting.value = false
   }
 }
 
@@ -138,17 +145,17 @@ async function reExplorer() {
         </main>
       </div>
       <div v-if="explorerRestartPending" class="restart-bar">
-        <span class="restart-text" :class="{ 'restart-text--error': explorerRestartPrompt.error }">
+        <span class="restart-text" :class="{ 'restart-text--error': explorerRestartError }">
           {{
-            explorerRestartPrompt.error
-              ? i18n('common.explorerRestartFailed', { err: explorerRestartPrompt.error })
-              : restartBusy
+            explorerRestartError
+              ? i18n('common.explorerRestartFailed', { err: String(explorerRestartError) })
+              : restarting
                 ? i18n('common.explorerRestarting')
                 : i18n('common.explorerRestartHint')
           }}
         </span>
         <div class="restart-actions">
-          <button class="restart-btn restart-btn--primary" :disabled="restartBusy" @click="confirmExplorerRestart">{{ i18n('common.yes') }}</button>
+          <button class="restart-btn restart-btn--primary" :disabled="restarting" @click="confirmExplorerRestart">{{ i18n('common.yes') }}</button>
           <button class="restart-btn" @click="explorerRestartPrompt.dismiss()">{{ i18n('common.no') }}</button>
         </div>
       </div>

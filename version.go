@@ -6,7 +6,7 @@ import (
 	"strings"
 )
 
-const CurrentVersion = "v1.8.0"
+const CurrentVersion = "v1.8.1"
 
 func parseVersion(v string) (major, minor, patch int, err error) {
 	orig := v

@@ -29,6 +29,45 @@ func psEncode(script string) string {
 	return base64.StdEncoding.EncodeToString(buf)
 }
 
+// runPS 执行 PowerShell 脚本并记录日志。
+// 不能用 CombinedOutput：stdout 接上管道后 PowerShell 5.1 会判定调用方懂 CLIXML，
+// 转而输出序列化 XML（含进度记录），失败时日志里只剩乱码、看不到真正的错误。
+// 这里只接管 stderr 拿错误文本，stdout 保持不捕获，PowerShell 就会输出纯文本。
+func runPS(label string, psArgs []string, timeout time.Duration) bool {
+	var stderr strings.Builder
+	args := append(append([]string{"-NoProfile", "-ExecutionPolicy", "Bypass"}, psArgs...))
+	if timeout <= 0 {
+		cmd := exec.Command("powershell.exe", args...)
+		HideWindow(cmd)
+		cmd.Stderr = &stderr
+		// 子进程可能继承管道句柄，没有 WaitDelay 时杀掉了 powershell 也会一直等
+		cmd.WaitDelay = 5 * time.Second
+		return logRun(label, stderr.String(), cmd.Run())
+	}
+	ctx, cancel := context.WithTimeout(context.Background(), timeout)
+	defer cancel()
+	cmd := exec.CommandContext(ctx, "powershell.exe", args...)
+	HideWindow(cmd)
+	cmd.Stderr = &stderr
+	cmd.WaitDelay = 5 * time.Second
+	err := cmd.Run()
+	if ctx.Err() == context.DeadlineExceeded {
+		Logf("[exec] %s 超时已终止 | 输出: %s", label, strings.TrimSpace(stderr.String()))
+		SetLastError(fmt.Sprintf("%s 超时", label))
+		return false
+	}
+	return logRun(label, stderr.String(), err)
+}
+
+func logRun(label, output string, err error) bool {
+	if err != nil {
+		Logf("[exec] %s 失败: %v | 输出: %s", label, err, strings.TrimSpace(output))
+		SetLastError(fmt.Sprintf("%s: %v", label, err))
+		return false
+	}
+	return true
+}
+
 func HideWindow(cmd *exec.Cmd) {
 	cmd.SysProcAttr = &syscall.SysProcAttr{
 		HideWindow:    true,
@@ -218,25 +257,13 @@ func runLoggedCtx(ctx context.Context, label string, cmd *exec.Cmd) bool {
 }
 
 func ExecuteString(s string) bool {
-	cmd := exec.Command("powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
-		"-EncodedCommand", psEncode(s))
-	HideWindow(cmd)
-	cmd.WaitDelay = 5 * time.Second
-	return runLogged("ExecuteString", cmd)
+	return runPS("ExecuteString", []string{"-EncodedCommand", psEncode(s)}, 0)
 }
 
 // ExecuteStringTimeout 同 ExecuteString，但到点强制终止进程；
 // 用于可能被系统服务卡住、不能让界面无限等待的命令
 func ExecuteStringTimeout(s string, timeout time.Duration) bool {
-	ctx, cancel := context.WithTimeout(context.Background(), timeout)
-	defer cancel()
-	cmd := exec.CommandContext(ctx, "powershell.exe", "-NoProfile", "-ExecutionPolicy", "Bypass",
-		"-EncodedCommand", psEncode(s))
-	HideWindow(cmd)
-	// 子进程（如 Appx 部署）可能继承管道句柄；没有 WaitDelay 时即使杀掉了 powershell，
-	// CombinedOutput 也会一直等管道关闭，表现为“超时了还卡住”
-	cmd.WaitDelay = 5 * time.Second
-	return runLoggedCtx(ctx, fmt.Sprintf("ExecuteStringTimeout(%s)", timeout), cmd)
+	return runPS(fmt.Sprintf("ExecuteStringTimeout(%s)", timeout), []string{"-EncodedCommand", psEncode(s)}, timeout)
 }
 
 // SuperExecuteString 以 TrustedInstaller 身份执行 PowerShell 脚本。
